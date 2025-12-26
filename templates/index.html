@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CNN Lung Cancer Detection</title>
+  <link rel="icon" type="image/png" href="/static/Image/logo.png" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollToPlugin.min.js" defer></script>
+  <meta name="description" content="Explainable deep learning (xAI + Grad-CAM) for lung cancer detection with CNNs." />
+  <meta property="og:title" content="CNN Lung Cancer Detection" />
+  <meta property="og:description" content="xAI + Grad-CAM heatmaps for transparent diagnostics." />
+  <meta property="og:type" content="website" />
+
+  <style>
+  .section {
+    transition: background-color 0.4s ease-in-out;
+  }
+  
+  .section:nth-of-type(even) {
+    background: linear-gradient(180deg, #f0f4f8 0%, #e6e9f0 100%); /* Softer gray gradient */
+  }
+
+  .section:nth-of-type(odd) {
+    background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%); /* White to very light blue */
+  }
+  
+  @keyframes animated-gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .hero-bg {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb, #3b82f6, #1d4ed8);
+    background-size: 300% 300%;
+    animation: animated-gradient 15s ease infinite;
+  }
+
+    .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,.08); }
+    .logoandname {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background-color: rgba(255, 255, 255, 0.85);
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 0.35rem 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        transition: background-color 0.3s ease;
+        }
+        .logoandname:hover {
+        background-color: rgba(255, 255, 255, 0.95);
+        }
+        .logoandname img {
+        height: 36px;
+        width: auto;
+        border-radius: 0.5rem;
+    }
+      .people-list { background-color:rgba(255,255,255,0.85); border-radius:1rem; padding:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+      .people-list li { transition:background-color 0.3s ease; border-radius:0.5rem; padding:0.75rem; display:flex; align-items:center; }
+      .people-list li:hover { background-color:rgba(59,130,246,0.05); }
+      .people-list img { border:2px solid #3b82f6; }
+      .people-list i { font-size:2rem; color:#3b82f6; margin-right:0.75rem; }
+
+      .about-images {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        
+  }
+
+  .about-img {
+    flex: 1 1 45%;
+    max-width: 300px;       
+    height: 220px;          
+    object-fit: cover;     
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .about-img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  }
+  .cnn-card {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .cnn-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+  }
+  .cnn-card h4 {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1e40af; 
+    margin-bottom: 0.5rem;
+  }
+  .cnn-card p {
+    font-size: 0.95rem;
+    color: #374151; 
+    line-height: 1.4;
+  }
+  .cnn-card a {
+    color: #0284c7; 
+    text-decoration: underline;
+  }
+  .data-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.data-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+}
+.data-card h4 {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+  color: #1e40af; 
+}
+.data-card p {
+  margin: 0.25rem 0;
+}
+
+.gradcam-image-container img {
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased">
+  <header class="fixed top-0 inset-x-0 z-50 bg-white bg-opacity-80 backdrop-filter backdrop-blur border-b border-gray-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+       <div class="logoandname">
+        <img src="/static/Image/logo.png" alt="Logo">
+        <span class="font-extrabold tracking-tight text-blue-700">DaLat University</span>
+        </div>
+      <nav class="hidden md:flex items-center space-x-6">
+        <a href="#about" class="hover:text-blue-700">About</a>
+        <a href="#cnns" class="hover:text-blue-700">CNNs</a>
+        <a href="#gradcam" class="hover:text-blue-700">Grad‑CAM</a>
+        <a href="#cta" class="hover:text-blue-700">Try Demo</a>
+      </nav>
+      <button id="navToggle" class="md:hidden px-3 py-2 rounded-lg border">Menu</button>
+    </div>
+
+    <div id="mobileMenu" class="md:hidden hidden border-t bg-white">
+      <div class="max-w-6xl mx-auto px-4 py-3 space-y-2">
+        <a href="#about" class="block">About</a>
+        <a href="#cnns" class="block">CNNs</a>
+        <a href="#gradcam" class="block">Grad‑CAM</a>
+        <a href="#cta" class="block">Try Demo</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="top" class="relative h-screen flex items-center hero-bg text-white overflow-hidden">
+    <div class="relative max-w-4xl mx-auto px-6 text-center">
+      <h1 class="text-4xl sm:text-6xl font-extrabold leading-tight mb-6 reveal">Transparent AI for Lung Cancer Detection</h1>
+      <p class="text-lg sm:text-xl text-blue-100 mb-8 reveal">
+        We combine CNNs with xAI (Grad‑CAM) to surface visual evidence—so predictions aren't a black box.
+      </p>
+      <div class="reveal">
+        <a href="#about" class="inline-block px-6 py-3 rounded-xl bg-white text-blue-700 font-semibold shadow hover:shadow-lg transform hover:-translate-y-0.5 transition">Learn more</a>
+        <a href="#cta" class="inline-block ml-3 px-6 py-3 rounded-xl border border-white font-semibold hover:bg-white hover:text-blue-700 transition">Run a demo</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="section min-h-screen flex items-center">
+    <div class="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-10">
+      <div>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">About The Project</h2>
+        <p class="text-lg text-gray-700 leading-relaxed reveal">
+          To improve decision-making transparency, this project leverages xAI to address the black‑box nature of AI.
+          Grad‑CAM generates heatmaps to highlight key areas in medical images, enhancing comprehension. This approach
+          increases diagnostic accuracy and helps clinicians validate model rationales.
+        </p>
+      </div>
+      <div class="about-images flex gap-4 justify-center">
+        <img src="/static/Image/xAI.png" alt="AI Illustration" class="about-img reveal">
+        <img src="/static/Image/Grad-CAM.png" alt="X-ray with Grad-CAM" class="about-img reveal">
+    </div>
+    </div>
+  </section>
+
+<section id="dataset" class="section min-h-screen flex items-center">
+  <div class="max-w-5xl mx-auto px-6">
+    <h3 class="text-2xl sm:text-3xl font-bold mb-6 text-blue-700 reveal">Dataset Overview</h3>
+    
+    <p class="text-lg text-gray-700 leading-relaxed mb-6 reveal">
+      We use <strong>Paul Mooney's Lung Disease dataset</strong> from Kaggle 
+      (<a href="https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia" 
+          target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">View dataset</a>). 
+      It contains <strong>5,856 chest X-ray images</strong> across multiple categories:
+    </p>
+
+    <div class="grid sm:grid-cols-2 gap-4 mb-8">
+      <div class="data-card reveal">
+        <h4>Normal</h4>
+        <p><span class="font-bold text-blue-900">1,583</span> images</p>
+        <p class="text-sm text-gray-600">Healthy lung reference</p>
+      </div>
+      <div class="data-card reveal">
+        <h4>Viral Pneumonia</h4>
+        <p><span class="font-bold text-blue-900">4,273</span> images</p>
+        <p class="text-sm text-gray-600">Cases of viral infection</p>
+      </div>
+    </div>
+
+    <p class="text-gray-700 leading-relaxed reveal">
+      This dataset provides a <strong>diverse, well-documented collection</strong> of lung X-rays 
+      to support <strong>detection, classification, and understanding</strong> of respiratory diseases. 
+      It is instrumental in advancing AI-driven healthcare and improving diagnostic outcomes.
+    </p>
+  </div>
+</section>
+
+    <section id="cnns" class="section min-h-screen flex items-center scroll-left">
+      <div class="max-w-5xl mx-auto px-6">
+        <h3 class="text-2xl sm:text-3xl font-semibold mb-3 reveal">Introduction to CNNs</h3>
+        <p class="text-lg text-gray-700 mb-4 reveal">
+          Convolutional Neural Networks are designed for grid‑like data (e.g., images). They learn spatial hierarchies of
+          features using convolutional filters, which makes them effective for classification, detection, and segmentation.
+          Learn more <a href="https://www.datacamp.com/tutorial/introduction-to-convolutional-neural-networks-cnns" target="_blank" class="text-blue-600 underline">here</a>.
+        </p>
+        <div class="cnn-steps grid md:grid-cols-3 gap-6">
+          <div class="cnn-card reveal">
+            <h4>Input Layer</h4>
+            <p>Image resized & normalized → <strong>224×224×3</strong></p>
+          </div>
+          <div class="cnn-card reveal">
+            <h4>Convolution</h4>
+            <p>Filters detect <strong>edges, corners, textures</strong>.</p>
+          </div>
+          <div class="cnn-card reveal">
+            <h4>Activation</h4>
+            <p>Apply <a href="https://blog.dailydoseofds.com/p/a-visual-and-intuitive-guide-to-what" target="_blank" rel="noopener noreferrer">ReLU</a> → keeps positives, avoids vanishing gradient.</p>
+          </div>
+          <div class="cnn-card reveal">
+            <h4>Pooling</h4>
+            <p>Downsamples image → <strong>smaller, faster</strong>.</p>
+          </div>
+          <div class="cnn-card reveal">
+            <h4>Fully Connected</h4>
+            <p>Combines features → learns <strong>patterns</strong>.</p>
+          </div>
+          <div class="cnn-card reveal">
+            <h4>Output</h4>
+            <p>Softmax/Sigmoid → <strong>Normal vs Cancer</strong>.</p>
+          </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="gradcam" class="section min-h-screen flex items-center relative">
+  <div class="max-w-6xl mx-auto px-6">
+    <h3 class="text-2xl sm:text-3xl font-semibold mb-6">Grad-CAM Heatmaps</h3>
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+
+      <div class="gradcam-image-container">
+        <img src="/static/Image/1006.png" alt="Chest X-ray sample" class="gradcam-img" />
+      </div>
+
+      <div class="gradcam-text space-y-4">
+        <p class="text-gray-700">
+          Overlay heatmaps to visualize which regions contribute most to the prediction.
+        </p>
+        <ul class="list-disc list-inside text-gray-700 space-y-1">
+          <li>Confidence score with class label</li>
+          <li>Downloadable explanations</li>
+          <li>Clinician-friendly UI</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="people" class="section min-h-screen flex items-center justify-center">
+        <div class="max-w-3xl mx-auto px-6 people-list">
+            <h2 class="text-2xl font-bold mb-4 text-blue-700">Our Team</h2>
+            <ul role="list">
+                {% for member in members %}
+                <li class="flex items-center py-4 first:pt-0 last:pb-0 reveal">
+                  {%if not member[3]%}
+                    <i class="bi bi-person-circle"></i>
+                  {%else%}
+                    <img class="h-12 w-12 rounded-full" src="{{member[3]}}" alt="" />
+                  {%endif%}
+                  <div class="ml-3 overflow-hidden">
+                      <p class="text-sm font-medium text-gray-900">{{ member[2] }}</p>
+                      <p class="truncate text-sm text-gray-500">{{ member[6] }}</p>
+                  </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+  </section>
+
+  <section id="cta" class="section min-h-[] flex items-center">
+    <div class="max-w-3xl mx-auto px-6 text-center">
+      <h3 class="text-3xl sm:text-4xl font-bold mb-4 reveal">Try the Demo</h3>
+      <p class="mb-6 text-gray-700 reveal">Upload a chest X‑ray. We'll run the model and produce a prediction with a Grad‑CAM explanation.</p>
+      <form class="reveal" id="uploadForm">
+        <button type="button" id = "runModelBtn" class="inline-block px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow hover:shadow-lg transform hover:-translate-y-0.5 transition btn btn-primary" data-bs-toggle="modal" data-bs-target="#loadingModal">
+          Run model
+        </button>
+      </form>
+
+
+      <p class="text-sm text-gray-500 mt-3">No data is stored. Results are for research only.</p>
+    </div>
+  </section>
+
+  
+ <!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4">
+      <div class="d-flex justify-content-center mb-3">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <h5 class="modal-title" id="loadingModalLabel">Processing...</h5>
+      <p class="text-muted">Please wait while the model is running.</p>
+    </div>
+  </div>
+</div>
+
+
+
+  
+
+  <footer class="py-8 text-center text-sm text-gray-500 flex flex-col items-center space-y-2">
+  <div>
+    © <span id="year"></span> Dalat University - Department of Mathematics and Information · All rights reserved.
+  </div>
+  <div class="flex space-x-3">
+    <a href="https://www.facebook.com/DalatUni/?locale=vi_VN" 
+       target="_blank" rel="noopener noreferrer" 
+       class="text-blue-600 hover:text-blue-800 text-lg">
+      <i class="bi bi-facebook"></i>
+    </a>
+    <a href="https://dlu.edu.vn/" 
+       target="_blank" rel="noopener noreferrer" 
+       class="text-blue-600 hover:text-blue-800 text-lg">
+      <i class="bi bi-three-dots"></i>
+    </a>
+  </div>
+  </footer>
+
+  <script>
+  window.addEventListener('DOMContentLoaded', () => {
+  if (!window.gsap) return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!reduce) {
+    gsap.to('#parallaxLayer', {
+      yPercent: 20,
+      ease: 'none',
+      scrollTrigger: { trigger: '#top', start: 'top top', end: 'bottom top', scrub: true }
+    });
+  }
+
+  const sections = gsap.utils.toArray('.section');
+  sections.forEach((sec) => {
+    const items = sec.querySelectorAll('.reveal');
+    if (!items.length) return;
+
+    if (sec.classList.contains("scroll-left")) {
+      gsap.from(items, {
+        opacity: 0,
+        x: -60,
+        duration: 1,
+        ease: "power2.out",
+        stagger: 0.2,
+        scrollTrigger: {
+          trigger: sec,
+          start: "top 80%",
+          end: "bottom 30%",
+          toggleActions: "play none none reverse"
+        }
+      });
+    } else {
+      gsap.from(items, {
+        opacity: 0,
+        y: 28,
+        duration: 0.9,
+        ease: "power2.out",
+        stagger: 0.15,
+        scrollTrigger: {
+          trigger: sec,
+          start: "top 80%",
+          end: "bottom 30%",
+          toggleActions: "play none none reverse"
+        }
+      });
+    }
+  });
+
+  gsap.from(".about-img", {
+    scale: 0.9,
+    opacity: 0,
+    duration: 1,
+    stagger: 0.2,
+    ease: "power2.out",
+    scrollTrigger: {
+      trigger: "#about",
+      start: "top 80%",
+      end: "bottom 40%",
+      toggleActions: "play none none reverse"
+    }
+  });
+
+  gsap.from(".gradcam-img", {
+  x: -100,
+  opacity: 0,
+  duration: 1,
+  ease: "power2.out",
+  scrollTrigger: {
+    trigger: "#gradcam",
+    start: "top 80%",
+  }
+});
+
+gsap.from(".gradcam-text", {
+  x: 100,
+  opacity: 0,
+  duration: 1,
+  ease: "power2.out",
+  scrollTrigger: {
+    trigger: "#gradcam",
+    start: "top 80%",
+  }
+});
+
+  gsap.from("#people li", {
+    y: 40,
+    opacity: 0,
+    duration: 0.8,
+    stagger: 0.15,
+    ease: "power2.out",
+    scrollTrigger: {
+      trigger: "#people",
+      start: "top 80%",
+      end: "bottom 30%",
+      toggleActions: "play none none reverse"
+    }
+  });
+
+  if (!reduce) {
+    const tl = gsap.timeline();
+    tl.from('#top h1', { y: 30, opacity: 0, duration: 0.8, ease: 'power3.out' })
+      .from('#top p', { y: 20, opacity: 0, duration: 0.6 }, '-=0.3')
+      .from('#top a', { y: 10, opacity: 0, duration: 0.5, stagger: 0.08 }, '-=0.25');
+  }
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+});
+
+const runBtn = document.getElementById("runModelBtn");
+const loadingModal = new bootstrap.Modal(document.getElementById("loadingModal"));
+
+runBtn.addEventListener("click", () => {
+  loadingModal.show();
+
+  setTimeout(() => {
+    window.location.href = "{{ url_for('test') }}"
+  }, 2500);
+});
+  </script>
+  
+</body>
+</html>

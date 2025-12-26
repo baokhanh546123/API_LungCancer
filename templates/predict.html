@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN Lung Cancer Detection</title>
+    <link rel="icon" type="image/png" href="/static/Image/logo.png" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollToPlugin.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="description" content="Explainable deep learning (xAI + Grad-CAM) for lung cancer detection with CNNs." />
+    <meta property="og:title" content="CNN Lung Cancer Detection" />
+    <meta property="og:description" content="xAI + Grad-CAM heatmaps for transparent diagnostics." />
+    <meta property="og:type" content="website" />
+    <style>
+      #sidebar.closed {
+        margin-left: -16rem; /* Tailwind's w-64 is 16rem (256px) */
+      }
+    </style>
+</head>
+
+<body class="h-screen flex bg-gray-50 relative overflow-hidden">
+
+  <aside id="sidebar"
+    class="bg-gray-100 w-64 h-full p-4 fixed left-0 top-0 transition-transform duration-300 ease-in-out shadow-md z-20">
+    
+    <h2 class="text-xl font-semibold mt-10 mb-4">⚙️ Model Settings</h2>
+    <div class="setting-group mb-4">
+      <form action="/load_model" method="post" id = 'model-form' enctype="multipart/form-data">
+        <label for="model-select" class="namemodel block text-gray-700 font-medium mb-2">Choose Model</label>
+        <select id="model-select" name="model"
+        class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="" disabled selected>Select a model...</option>
+          <option value="model-handmade">Model Handmake</option>
+          <option value="model-resnet">Model RestNet (Recommended)</option>
+          <option value="model-mobinet">Model MobileNet</option>
+        </select>
+
+        <div class="my-4"></div>
+
+        <label for="upload-img-hidden" class="namemodel block text-gray-700 font-medium mb-2 mt-4">Upload Images</label>
+        <div class="upload-container">
+          <input type="file" id="upload-img-hidden" name="upload-img" accept="image/*" class="hidden">
+          <label for="upload-img-hidden"
+            class="cursor-pointer inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+            Choose File(s)
+          </label>
+          <br>
+          <span id="file-count" class="ml-2 text-gray-600"></span>
+        </div>
+
+        <div class="process-model mt-auto pt-4 border-t border-gray-300">
+          <button class="w-full py-2 rounded font-bold text-white 
+                        bg-red-600 hover:bg-red-800 
+                        shadow-lg transition duration-150" id ='run-model-btn'>
+            Run Model
+          </button>
+        </div>
+      </form>
+    </div>
+  </aside>
+
+  <button id="sidebar-toggle"
+    class="fixed top-1/2 left-64 transform -translate-y-1/2 -translate-x-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-2 shadow-md transition-all duration-300 ease-in-out z-30">
+    <i id="toggle-icon" data-lucide="chevrons-left" class="w-4 h-4"></i>
+  </button>
+
+ <section id="main-content"
+    class="flex-grow p-8 w-full transition-all duration-300 ease-in-out ml-64">
+
+    <div class="flex flex-col md:flex-row gap-8 mb-8">
+        
+        <div id="left-top-panel" class="md:w-1/2">
+            <h2 class="text-xl font-semibold mb-3">Original Image</h2>
+            
+            <div id="original-image-container" class="bg-gray-200 border border-gray-400 rounded-lg overflow-hidden h-96 flex items-center justify-center">
+                <p class="text-gray-500">Upload an image from the sidebar to view it here.</p>
+                <img src="" alt="Original Imamge" class = "hidden max-w-full max-h-full object-contain block mx-auto shadow-sm" id="preview-img">
+              </div>
+
+        </div>
+
+        <div id="right-top-panel" class="md:w-1/2">
+            <h2 class="text-xl font-semibold mb-3">Grad-CAM Visualization</h2>
+            <div id="grad-cam-image-container" class="bg-gray-200 border border-gray-400 rounded-lg overflow-hidden h-96 flex items-center justify-center">
+                <p class="text-gray-500">Grad-CAM result will appear here after model processing.</p>
+                </div>
+        </div>
+    </div>
+
+    <div id="bottom-panel">
+        <h2 class="text-xl font-semibold mb-3">Prediction Details</h2>
+        
+        <div class="bg-white p-6 border border-gray-300 rounded-lg shadow-md">
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="info-item">
+                    <label class="block text-sm font-medium text-gray-500">Image Name</label>
+                    <p id="info-filename" class="text-lg font-bold text-gray-800">-</p>
+                </div>
+                
+                <div class="info-item">
+                    <label class="block text-sm font-medium text-gray-500">Predicted Class</label>
+                    <p id="info-predict" class="text-lg font-bold text-blue-600">-</p>
+                </div>
+                
+                <div class="info-item">
+                    <label class="block text-sm font-medium text-gray-500">Confidence Score</label>
+                    <p id="info-accuracy" class="text-lg font-bold text-green-600">-</p>
+                </div>
+                
+                <div class="info-item">
+                    <label class="block text-sm font-medium text-gray-500">Model Runtime</label>
+                    <p id="info-runtime" class="text-lg font-bold text-gray-800">0.0s</p>
+                </div>
+                
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-p gray-200">
+                 <label class="block text-sm font-medium text-gray-500 mb-2">Top Class Probabilities</label>
+                 <ul id="probability-list" class="space-y-1 text-sm">
+                    <li>Class A: -%</li>
+                 </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+  <div id="status-dialog" 
+     class="fixed top-5 right-5 z-50 p-4 rounded-lg shadow-xl opacity-0 transform translate-x-full transition-all duration-500 ease-in-out w-80 pointer-events-none"
+     role="alert">
+    
+    <div class="flex items-center">
+        <i id="status-icon" data-lucide="check-circle" class="w-6 h-6 mr-3 flex-shrink-0"></i>
+        
+        <div>
+            <p id="status-title" class="font-bold text-sm">Status Title</p>
+            <p id="status-message" class="text-sm">Notification message goes here.</p>
+        </div>
+    </div>
+  </div>
+
+  <script src="/static/js/predict.js"></script>
+</body>
+</html>
