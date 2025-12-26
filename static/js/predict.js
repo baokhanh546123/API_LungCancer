@@ -109,6 +109,49 @@ elements.modelForm.addEventListener('submit', async (event) => {
     formData.append('model', selectedModel);
     formData.append('upload-img', file);
 
+    const updateText = (id , value , fallback = '-') => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value !== undefined && value !== null ? value : fallback;
+    }
+
+    const updateVisualStatus = (isPneumonia) => {
+        const classCard = document.getElementById('class-card');
+        const interpretationCard = document.getElementById('interpretation-card');
+        const interpIcon = document.getElementById('interpretation-icon');
+
+        if (isPneumonia) {
+            classCard.className = "p-4 bg-red-100 border border-red-200 rounded-lg shadow-md animate-pulse";
+            interpretationCard.className = "bg-red-50 border-l-4 border-red-500 p-5 rounded-r-lg shadow-md";
+            interpIcon.setAttribute('data-lucide', 'alert-circle');
+            interpIcon.className = "w-8 h-8 text-red-500";
+        } else {
+            classCard.className = "p-4 bg-green-100 border border-green-200 rounded-lg shadow-md";
+            interpretationCard.className = "bg-green-50 border-l-4 border-green-500 p-5 rounded-r-lg shadow-md";
+            interpIcon.setAttribute('data-lucide', 'check-circle');
+            interpIcon.className = "w-8 h-8 text-green-500";
+        }
+        lucide.createIcons();
+    }
+
+    const updateInferenceUI = (data) => {
+        const res = data.result;
+        const isPneumonia = res.prediction_label === 'PNEUMONIA';
+
+        updateVisualStatus(isPneumonia);
+        updateText('info-predict', res.prediction_label);
+        updateText('info-decision-score', res.decision_score?.toFixed(4));
+        updateText('info-predict-confidence', res.prediction_confidence ? `${(res.prediction_confidence * 100).toFixed(2)}%` : '-');
+        
+        updateText('info-inference-time', res.run_time ? `${res.run_time.toFixed(4)}s` : '0.0000s');
+        if (res.raw_probabilities) {
+            const pneu = res.raw_probabilities['PNEUMONIA'] || res.raw_probabilities['pneumonia'] || 0;
+            const norm = res.raw_probabilities['NORMAL'] || res.raw_probabilities['normal'] || 0;
+            updateText('info-prob-pneumonia', pneu.toFixed(4));
+            updateText('info-prob-normal', norm.toFixed(4));
+        }
+        updateText('info-interpretation', res.interpretation);
+    }
+
     try {
         const response = await fetch(elements.modelForm.action, {
             method: 'POST',
@@ -117,12 +160,17 @@ elements.modelForm.addEventListener('submit', async (event) => {
 
         if (!response.ok) throw new Error(await response.text());
 
-        const result = await response.json();
-        showStatus('success', 'Success!', `Model: ${result.model_used}`);
-        console.log("Response:", result);
+        const data = await response.json(); // result structure depends on backend response
+
+        if (data.status === "success"){
+            updateInferenceUI(data) 
+            showStatus('success', 'Analysis Complete', `Model ${data.model_used} finished.`);
+        }else{
+            throw new Error(data.error || 'Model processing failed');
+        }
     } catch (err) {
-        showStatus('error', 'Failed', 'Server error or connection lost.');
-        console.error(err);
+        showStatus('error', 'Failed', err.message || 'Server error occurred.');
+        console.error("Fetch Error:", err);
     } finally {
         setBtnLoading(false);
     }
