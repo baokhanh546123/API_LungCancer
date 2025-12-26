@@ -13,7 +13,7 @@ from typing import Any , Annotated , List
 from pathlib import Path
 from event.detect_gpu import Detect
 from event.detect_gradcam import GradCam
-import logging , re , os ,random , sys , uvicorn , io
+import logging , re , os ,random , sys , uvicorn , io , time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -81,8 +81,12 @@ async def file_to_image(upload_img: UploadFile = File(..., alias="upload-img")) 
 
     try:
         contents = await upload_img.read()
-        img = Image.open(io.BytesIO(contents)).convert("RGB")
-        return img , contents
+        img = Image.open(io.BytesIO(contents))
+
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        img.filename = upload_img.filename
+        return img
     except Exception as e:
         logging.error(f"Error parsing image: {e}")
         raise HTTPException(status_code=400, detail="Invalid image data")
@@ -103,11 +107,15 @@ async def load_model(
 
         if model == 'model-resnet':
             from model.restnet18_onnx_inference import ONNXInferenceModel
+            start = time.perf_counter()
             restnet = ONNXInferenceModel(str(onnx_path) , LABELS , threshold=0.6)
-            result = restnet.predict(img_bytes)
+            result = restnet.predict(image)
+            end = time.perf_counter()
+            delta = float(end - start) 
 
             if 'Error' in result:
                 return {"status": "error", "message": result['Error']}
+
 
             return {
                 "status": "success", 
@@ -118,11 +126,15 @@ async def load_model(
                     'prediction_confidence': result.get('prediction_confidence'),
                     'raw_probabilities': result.get('risk_probability'),
                     'decision_threshold': result.get('decision_threshold'),
-                    'interpretation': result.get('interpretation')
+                    'interpretation': result.get('interpretation'),
+                    "run_time": round(delta, 4)
                 }
             }
+            
         else:
-            return {"status": "error", "message": f"Model '{model}' is not implemented yet."}
+            raise HTTPException(status_code=400, detail="Invalid model selection")
+    except HTTPException:
+        raise
     except Exception as e :
         logging.error(f"Server Error: {str(e)}")
         return {"status": "failed", "error": str(e)}
