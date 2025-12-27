@@ -6,21 +6,20 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from connect.pysql import get_members_table , produre_add_members , produre_delete_members , produre_update_members , length_member_id
-from connect.nosql import MongoDB
-from contextlib import asynccontextmanager
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from dotenv import load_dotenv
-from typing import Any , Annotated , List 
+from typing import Any , Annotated , List , Dict
 from pathlib import Path
 from event.detect_gpu import Detect
 from event.detect_gradcam import GradCam
-import logging , re , os ,random , sys , uvicorn , io , time
+import logging , re , os ,random , sys , uvicorn , io , time , base64 , asyncio , numpy as np
 
 logging.basicConfig(level=logging.INFO)
 
 current_dir = Path(__file__).parent
 env_file = current_dir / 'connect/connection.env'
 load_dotenv(env_file)
-
 
 def pre_run():
     try:
@@ -41,20 +40,6 @@ app = FastAPI(title="Chest X-ray Classification API",description="ONNX-based che
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
-nosql = MongoDB(uri=os.getenv('HOST_NSQL') , db_name=os.getenv('DB_NAME') , collection_name=os.getenv('COL_NAME'))
-@asynccontextmanager
-async def lifespan(app : FastAPI):
-    try:
-        await nosql.connect()
-        logging.info('Mongo ready')
-    except Exception as e :
-        logging.error('Failed' , e )
-    
-    yield
-    await nosql.close()
-    logging.info('exit')
-
 
 @app.middleware("http")
 async def no_cache_middleware(request: Request, call_next):
@@ -81,6 +66,12 @@ async def file_to_image(upload_img: UploadFile = File(..., alias="upload-img")) 
 
     try:
         contents = await upload_img.read()
+        if len(contents) > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "File too large", "message": "Max 10MB"}
+            )
+        
         img = Image.open(io.BytesIO(contents))
 
         if img.mode != 'RGB':
@@ -90,6 +81,24 @@ async def file_to_image(upload_img: UploadFile = File(..., alias="upload-img")) 
     except Exception as e:
         logging.error(f"Error parsing image: {e}")
         raise HTTPException(status_code=400, detail="Invalid image data")
+    except HTTPException:
+        raise
+
+executor = ThreadPoolExecutor(max_workers=4)
+def encode_img_to_base64(img_arr : np.ndarray , format : str = 'PNG') -> str:
+    try:
+        if img_arr.dtype != np.uint8:
+            img_arr = (img_arr * 255).clip(0, 255).astype(np.uint8)
+
+        pil_img = Image.fromarray(img_arr , mode='L')  if len(img_arr.shape) == 2 else Image.fromarray(img_arr , mode='RGB')    
+        buffered = io.BytesIO()
+        pil_img.save(buffered, format=format)
+        img_bytes = buffered.getvalue()
+        base64_str = base64.b64encode(img_bytes).decode('utf-8')
+        return f"data:image/{format.lower()};base64,{base64_str}"
+    except Exception as e:
+        logging.error(f"Failed to encode image: {e}")
+        return ""
 
 @app.post("/load_model") 
 async def load_model(
@@ -97,25 +106,44 @@ async def load_model(
     image: Annotated[Image.Image , Depends(file_to_image)]
 ):
     try:
-
         onnx_path = current_dir / 'model/resnet18_lung_finetuned.onnx'
-        if not onnx_path.exists():
+        pt_path = current_dir / 'model/best_pneumonia_classifier.pt'
+
+        if not onnx_path.exists() and not pt_path.exists():
             raise HTTPException(status_code=500, detail="Model file not found on server")
-    
         
         LABELS = ['NORMAL', 'PNEUMONIA']
 
         if model == 'model-resnet':
             from model.restnet18_onnx_inference import ONNXInferenceModel
             start = time.perf_counter()
-            restnet = ONNXInferenceModel(str(onnx_path) , LABELS , threshold=0.6)
+            restnet = ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.6)
+            
+            #predict
             result = restnet.predict(image)
-            end = time.perf_counter()
-            delta = float(end - start) 
-
             if 'Error' in result:
                 return {"status": "error", "message": result['Error']}
 
+            loop = asyncio.get_event_loop()
+            grad_cam_res = await loop.run_in_executor(
+                executor,
+                partial(restnet.gradcam_for_img, image, restnet.image_transforms, method='gradcam')
+            )
+            if not grad_cam_res.get('success', False):
+                error_msg = grad_cam_res.get('error', 'Unknown error')
+                logging.error(f"Grad-CAM failed: {error_msg}")
+                return {
+                    "success": False,
+                    "message": error_msg
+                }
+            
+            overlay_base64 = encode_img_to_base64(grad_cam_res['cam_overlay'] , format='PNG')
+            
+            if not overlay_base64:
+                raise ValueError("Failed to encode Grad-CAM images")
+            
+            end = time.perf_counter()
+            delta = float(end - start) 
 
             return {
                 "status": "success", 
@@ -128,6 +156,9 @@ async def load_model(
                     'decision_threshold': result.get('decision_threshold'),
                     'interpretation': result.get('interpretation'),
                     "run_time": round(delta, 4)
+                },
+                "images" : {
+                     "gradcam" : overlay_base64 if overlay_base64 is not None else 'HTTP 500 Error'
                 }
             }
             
