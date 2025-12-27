@@ -61,8 +61,10 @@ You can access <a href = 'https://dashboard.ngrok.com/get-started/setup/windows'
 ```
     ngrok htpp 8000
 ```
+### 2. Dowload model 
+- You can dowload model <a href = 'https://drive.google.com/drive/u/1/folders/127wtoC5b6TeUsBNkpuhIZEiIO0KeHbrc'>Here</a>
 
-### 2. Create Virtual Environment & Install Dependencies
+### 3. Create Virtual Environment & Install Dependencies
 
 #### Windows
 
@@ -112,5 +114,4 @@ Your input helps make the system better!
 --------------------------------------------
 
 ## Author
-
 Developed with using FastAPI, PostgreSQL, and GSAP animations.
