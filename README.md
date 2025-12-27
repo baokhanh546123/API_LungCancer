@@ -20,8 +20,8 @@ a **clinician-friendly interface**.
 
 ## Tools & Libraries
 
--   **FastAPI** (Python backend)
--   **HTML5 & CSS3** (frontend design)
+-   **FastAPI and JS** (Python backend)
+-   **HTML5 & CSS** (frontend design)
 -   **PostgreSQL** (database)
 -   **GSAP** (animation library)
 -   **Uvicorn** (server runner)
@@ -59,7 +59,7 @@ You can access <a href = 'https://dashboard.ngrok.com/get-started/setup/windows'
 - Other case , you can install via docker or RaspberryPi for embedding device , ... you can access to <a href = 'https://dashboard.ngrok.com'>ngrok</a>
 - After , run ngrok by command below
 ```
-    ngrok htpp 8001
+    ngrok htpp 8000
 ```
 
 ### 2. Create Virtual Environment & Install Dependencies
@@ -82,11 +82,12 @@ pip install -r requirements.txt
 
 ### 3. Run the Application
 
+- For develop
 ``` bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-#### Or use command 
+- For run
 #### Linux / macOS
 ``` bash 
     python3 main.py
@@ -108,8 +109,7 @@ If you try this project, please share your feedback, suggestions, or
 improvements.\
 Your input helps make the system better!
 
-------------------------------------------------------------------------
-</body>
+--------------------------------------------
 
 ## Author
 
