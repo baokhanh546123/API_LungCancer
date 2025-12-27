@@ -70,19 +70,19 @@ function showStatus(type, title, msg, duration = 4000) {
 }
 
 //File & Preview---
+let selectedFile = null;
 elements.fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) {
         elements.fileCount.textContent = 'No file chosen';
+        selectedFile = null;
         return;
     }
+    selectedFile = file;
     elements.fileCount.textContent = '1 file selected';
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        elements.imagePreviewContainer.innerHTML = `<img src="${event.target.result}" class="max-w-full max-h-full object-contain">`;
-    };
-    reader.readAsDataURL(file);
+    elements.imagePreviewContainer.innerHTML = `<p class="text-gray-500">Press "Run Model" to view analysis.</p>`;
+    document.getElementById('grad-cam-image-container').innerHTML = `<p class="text-gray-500">Grad-CAM result will appear after processing.</p>`;
 });
 
 //Submit Form (API Call) ---
@@ -96,10 +96,10 @@ elements.modelForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const selectedModel = elements.modelSelect.value;
-    const file = elements.fileInput.files[0];
+    //const file = elements.fileInput.files[0];
 
     // Validation
-    if (!file) return showStatus('error', 'Required', 'Please upload an image.');
+    if (!selectedFile) return showStatus('error', 'Required', 'Please upload an image.');
     if (!VALID_MODEL_LIST.includes(selectedModel)) return showStatus('error', 'Invalid', 'Please select a valid model.');
 
     setBtnLoading(true);
@@ -107,7 +107,7 @@ elements.modelForm.addEventListener('submit', async (event) => {
 
     const formData = new FormData();
     formData.append('model', selectedModel);
-    formData.append('upload-img', file);
+    formData.append('upload-img', selectedFile);
 
     const updateText = (id , value , fallback = '-') => {
         const el = document.getElementById(id);
@@ -133,8 +133,9 @@ elements.modelForm.addEventListener('submit', async (event) => {
         lucide.createIcons();
     }
 
-    const updateInferenceUI = (data) => {
+    const updateInferenceUI = (data, originalFile) => {
         const res = data.result;
+        const images = data.images;
         const isPneumonia = res.prediction_label === 'PNEUMONIA';
 
         updateVisualStatus(isPneumonia);
@@ -150,7 +151,51 @@ elements.modelForm.addEventListener('submit', async (event) => {
             updateText('info-prob-normal', norm.toFixed(4));
         }
         updateText('info-interpretation', res.interpretation);
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            elements.imagePreviewContainer.innerHTML = `
+                <img src="${e.target.result}" 
+                    class="h-full w-auto object-cover block mx-auto shadow-md rounded-lg fade-in">
+            `;
+            elements.imagePreviewContainer.classList.remove('bg-gray-200');
+            elements.imagePreviewContainer.classList.add('bg-white');
+        };
+        reader.readAsDataURL(originalFile);
+
+        const gradCamContainer = document.getElementById('grad-cam-image-container');
+        if (gradCamContainer) {
+            if (images && images.gradcam) {
+                // Chèn ảnh với hiệu ứng transition để hiện ra mượt mà
+                gradCamContainer.innerHTML = `
+                    <img src="${images.gradcam}" 
+                        alt="Grad-CAM Visualization" 
+                        class="h-full w-auto object-cover block mx-auto shadow-md rounded-lg transition-all duration-500 ease-in-out"
+                        style="display: block;
+                        onclick="window.open(this.src, '_blank')"
+                    />
+                `;
+                gradCamContainer.classList.replace('bg-gray-200', 'bg-white');
+            } else {
+                gradCamContainer.innerHTML = `<p class="text-red-500 font-medium">Grad-CAM image not available</p>`;
+            }
+        }
     }
+
+    elements.imagePreviewContainer.innerHTML = `
+    <div class="flex flex-col items-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-2"></div>
+        <p class="text-red-600 text-sm animate-pulse">Processing Original...</p>
+    </div>
+    `;
+
+
+    document.getElementById('grad-cam-image-container').innerHTML = `
+    <div class="flex flex-col items-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
+        <p class="text-blue-600 text-sm animate-pulse">Generating Heatmap...</p>
+    </div>
+    `;
 
     try {
         const response = await fetch(elements.modelForm.action, {
@@ -163,7 +208,7 @@ elements.modelForm.addEventListener('submit', async (event) => {
         const data = await response.json(); // result structure depends on backend response
 
         if (data.status === "success"){
-            updateInferenceUI(data) 
+            updateInferenceUI(data , selectedFile); 
             showStatus('success', 'Analysis Complete', `Model ${data.model_used} finished.`);
         }else{
             throw new Error(data.error || 'Model processing failed');
