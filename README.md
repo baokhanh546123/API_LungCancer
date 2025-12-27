@@ -82,7 +82,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Run the Application
+### 4. Run the Application
 
 - For develop
 ``` bash
