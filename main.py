@@ -17,9 +17,7 @@ import logging , re , os ,random , sys , uvicorn , io , time , base64 , asyncio 
 
 logging.basicConfig(level=logging.INFO)
 
-current_dir = Path(__file__).parent
-env_file = current_dir / 'connect/connection.env'
-load_dotenv(env_file)
+current_dir = Path(__file__).parent 
 
 def pre_run():
     try:
@@ -106,15 +104,17 @@ async def load_model(
     image: Annotated[Image.Image , Depends(file_to_image)]
 ):
     try:
-        onnx_path = current_dir / 'model/resnet18_lung_finetuned.onnx'
-        pt_path = current_dir / 'model/best_pneumonia_classifier.pt'
+        onnx_path , pt_path = None , None
 
-        if not onnx_path.exists() and not pt_path.exists():
-            raise HTTPException(status_code=500, detail="Model file not found on server")
-        
         LABELS = ['NORMAL', 'PNEUMONIA']
 
         if model == 'model-resnet':
+            onnx_path = current_dir / 'model/resnet18_lung_finetuned.onnx'
+            pt_path = current_dir / 'model/best_pneumonia_classifier.pt'
+
+            if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
+                raise HTTPException(status_code=500, detail="Model file not found on server")
+            
             from model.restnet18_onnx_inference import ONNXInferenceModel
             start = time.perf_counter()
             restnet = ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.6)
@@ -145,6 +145,56 @@ async def load_model(
             end = time.perf_counter()
             delta = float(end - start) 
 
+            return {
+                "status": "success", 
+                "model_used": model,
+                "result": {
+                    'prediction_label': result.get('clinical_decision'),
+                    'decision_score': result.get('decision_score'),
+                    'prediction_confidence': result.get('prediction_confidence'),
+                    'raw_probabilities': result.get('risk_probability'),
+                    'decision_threshold': result.get('decision_threshold'),
+                    'interpretation': result.get('interpretation'),
+                    "run_time": round(delta, 4)
+                },
+                "images" : {
+                     "gradcam" : overlay_base64 if overlay_base64 is not None else 'HTTP 500 Error'
+                }
+            }
+
+        elif model == 'model-mobinet':
+            onnx_path = current_dir / 'model/mobilenetv2_lung_finetuned.onnx'
+            pt_path = current_dir / 'model/best_pneumonia_classifier_mobilenetv2.pt'
+
+            if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
+                raise HTTPException(status_code=500, detail="Model file not found on server")
+            
+            from model.mobilenetv2_lung_inference import Mobinet_ONNXInferenceModel
+            start = time.perf_counter()
+            mobilenet = Mobinet_ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.75)
+            #predict
+            result = mobilenet.predict(image)
+            if 'Error' in result:
+                return {"status": "error", "message": result['Error']}
+            loop = asyncio.get_event_loop()
+            grad_cam_res = await loop.run_in_executor(
+                executor,
+                partial(mobilenet.gradcam_for_img, image, mobilenet.image_transforms, method='gradcam')
+            )
+            if not grad_cam_res.get('success', False):
+                error_msg = grad_cam_res.get('error', 'Unknown error')
+                logging.error(f"Grad-CAM failed: {error_msg}")
+                return {
+                    "success": False,
+                    "message": error_msg
+                }
+            
+            overlay_base64 = encode_img_to_base64(grad_cam_res['cam_overlay'] , format='PNG')
+            if not overlay_base64:
+                raise ValueError("Failed to encode Grad-CAM images")
+            
+            end = time.perf_counter()
+            delta = float(end - start)
             return {
                 "status": "success", 
                 "model_used": model,
