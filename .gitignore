@@ -35,6 +35,7 @@ dist/
 *.egg-info/
 
 *.pt
+*.h5
 .onnx.data
 .onnx
-model/
+

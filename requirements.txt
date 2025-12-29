@@ -54,3 +54,4 @@ opencv-contrib-python
 motor
 dnspython
 python-dotenv
+huggingface_hub

@@ -28,11 +28,12 @@ class ONNXInferenceModel:
 
         self.onnx_path = onnx_path
         self.pt_path = pt_path
-        self.pytorch_model = None
+        
         self.labels = labels
         self.input_size = input_size
         self.threshold = float(threshold)
 
+        self.pytorch_model = None
         # 'strict_mode=True' applies stricter validation criteria.
         self.image_validator = ImageValidator(strict_mode=True)
 
@@ -250,14 +251,17 @@ class ONNXInferenceModel:
             results.append(result)
         return results
 
-    def gradcam_for_img(self , model : nn.Module , image_path: Union[Image.Image , str , Path , bytes] , transform : transforms.Compose, 
+    def gradcam_for_img(self , image_path: Union[Image.Image , str , Path , bytes] , transform : transforms.Compose, 
                         target_layer : Optional[nn.Module] = None , method : str = 'gradcam' , validate_img : bool = False) -> Dict:
         try:
-            if not isinstance(model , nn.Module):
-                raise TypeError(
-                "Grad-CAM requires a PyTorch nn.Module. "
-                "ONNXRuntime models are not supported."
-            )
+            if self.pytorch_model is None:
+                self.pytorch_model = self.load_model_pt()
+                model = self.pytorch_model
+                if not isinstance(model , nn.Module):
+                    raise TypeError(
+                    "Grad-CAM requires a PyTorch nn.Module. "
+                    "ONNXRuntime models are not supported."
+                )    
 
             cam_map = {
                 "gradcam": GradCAM,

@@ -37,38 +37,25 @@ a **clinician-friendly interface**.
 If not, download it here: [Python
 Downloads](https://www.python.org/downloads/)
 
-- You need dowload <a href = 'https://ngrok.com/'>ngrok</a> which allow everyone can access to web.
+### 2. Dowload project 
 
-### Dowload ngrok
-
-#### Windows 
-You can access <a href = 'https://dashboard.ngrok.com/get-started/setup/windows'>Link</a>
-
-####  macOS
+#### Git 
 ``` bash
-    brew install ngrok
-    ngrok config add-authtoken yourtoken
+git clone https://github.com/baokhanh546123/API_LungCancer.git
 ```
 
-#### Linux
-``` bash
-    snap install ngrok
-    ngrok config add-authtoken yourtoken
-```
+### Github
+- Access <a href = 'https://github.com/baokhanh546123/API_LungCancer'>Link</a>
+- Click to code and dowload zip 
+- Unzip
 
-- Other case , you can install via docker or RaspberryPi for embedding device , ... you can access to <a href = 'https://dashboard.ngrok.com'>ngrok</a>
-- After , run ngrok by command below
-```
-    ngrok htpp 8000
-```
-### 2. Dowload model 
-- You can dowload model <a href = 'https://drive.google.com/drive/u/1/folders/127wtoC5b6TeUsBNkpuhIZEiIO0KeHbrc'>Here</a>
 
 ### 3. Create Virtual Environment & Install Dependencies
 
 #### Windows
 
 ``` bash
+cd API_LungCancer
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
@@ -77,6 +64,7 @@ pip install -r requirements.txt
 #### Linux / macOS
 
 ``` bash
+cd API_LungCancer
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt

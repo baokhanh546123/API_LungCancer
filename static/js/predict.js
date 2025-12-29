@@ -79,7 +79,7 @@ elements.fileInput.addEventListener('change', (e) => {
         return;
     }
     selectedFile = file;
-    elements.fileCount.textContent = '1 file selected';
+    elements.fileCount.textContent = '1 file selected';        
 
     elements.imagePreviewContainer.innerHTML = `<p class="text-gray-500">Press "Run Model" to view analysis.</p>`;
     document.getElementById('grad-cam-image-container').innerHTML = `<p class="text-gray-500">Grad-CAM result will appear after processing.</p>`;
