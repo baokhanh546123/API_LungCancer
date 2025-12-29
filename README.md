@@ -34,9 +34,10 @@ a **clinician-friendly interface**.
 Ensure the following are installed on your system:
 - Python 3.9 or higher (if not it , you can dowload [Here](https://www.python.org/downloads/))
 - PostgreSQL 
+- Git (That would be great.)
 
 
-- Verify Python installation:
+Verify Python installation:
 
 #### Linux / macOS
 
