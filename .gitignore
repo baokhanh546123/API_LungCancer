@@ -12,6 +12,8 @@ env/
 .env
 .env.*
 
+.cache/
+
 # FastAPI / Uvicorn
 *.log
 

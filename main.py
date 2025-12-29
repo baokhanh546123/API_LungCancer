@@ -11,7 +11,6 @@ from functools import partial
 from dotenv import load_dotenv
 from typing import Any , Annotated , List , Dict
 from pathlib import Path
-from model.dowload_model import download_models , check_folder
 from event.detect_gpu import Detect
 from event.detect_gradcam import GradCam
 import logging , re , os ,random , sys , uvicorn , io , time , base64 , asyncio , numpy as np
@@ -22,6 +21,18 @@ current_dir = Path(__file__).parent
 
 def pre_run():
     try:
+        detector = Detect()
+        installer = GradCam()
+        logging.info("Checking GPU compatibility...")
+        if not detector.install_library(min_cores=128):
+            logging.warning("Hardware requirements not met (min 128 cores).")
+
+        logging.info("Checking Grad-CAM dependencies...")
+        if not installer.install_grad_cam():
+            logging.error("Failed to initialize Grad-CAM environment.")
+            return False
+        
+        from model.dowload_model import download_models , check_folder
         MODEL_REPO = "Trank123/API_LungCancer"
         FILES_TO_DOWNLOAD = [
             "best_pneumonia_classifier.pt",
@@ -31,32 +42,19 @@ def pre_run():
             "resnet18_lung_finetuned.onnx",
             "resnet18_lung_finetuned.onnx.data"
         ]
-        
-        needs_download = not check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
-        
-        if needs_download:
+        is_model_ready = check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
+        if not is_model_ready:
             logging.info("Model files missing. Starting automatic download from HF...")
-            
             download_models(
                 repo_id=MODEL_REPO, 
                 file_list=FILES_TO_DOWNLOAD, 
                 target_subdir='model/models'
             )
-            return True, True 
-
-        detector = Detect()
-        if not detector.install_library(min_cores=128):
-            logging.warning("Hardware requirements not met (min 128 cores).")
-
-        installer = GradCam()
-        if not installer.install_grad_cam():
-            logging.error("Failed to initialize Grad-CAM environment.")
-            return False, False
-            
-        return True, False
+            return True
+        return True
     except Exception as e:
-        logging.error(f"Lỗi trong quá trình pre_run: {e}")
-        return False, False
+        logging.error(f"Error during pre_run: {e}")
+        return False
 
 app = FastAPI(title="Chest X-ray Classification API",description="ONNX-based chest X-ray classification",version="1.0")
 
