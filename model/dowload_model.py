@@ -1,81 +1,77 @@
-import os
-import logging
-import requests
+import os , logging
 from pathlib import Path
-from typing import Dict
+from huggingface_hub import hf_hub_download
+from huggingface_hub.utils import RepositoryNotFoundError, EntryNotFoundError
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
+def check_folder(repo_id, file_list):
+    base_dir = Path(__file__).parent.parent
+    model_dir = base_dir / 'model/models'
+    if not model_dir.exists():
+        model_dir.mkdir(parents=True, exist_ok=True)
 
-class ModelDownloader:
-    """
-    Download multiple ML model files from Google Drive.
-    """
+    missing = []
+    for f in file_list:
+        file_path = model_dir / f
+        if not file_path.exists():
+            missing.append(f)
+    
+    if missing:
+        logging.info("Some model files are missing. Downloading...")
+        download_models(repo_id, missing)
+        return False
+    else:
+        logging.info("All model files are present.")
+        return True
 
-    def __init__(
-        self,
-        file_map: Dict[str, str],
-        download_dir: Path | str,
-        chunk_size: int = 8192,
-    ):
-        """
-        :param file_map: dict {filename: google_drive_file_id}
-        :param download_dir: directory to save downloaded models
-        :param chunk_size: download chunk size
-        """
-        self.file_map = file_map
-        self.download_dir = Path(download_dir)
-        self.chunk_size = chunk_size
+def download_models(repo_id, file_list, target_subdir='model/models'):
+    base_dir = Path(__file__).resolve().parent.parent
+    local_dir = base_dir / target_subdir
+    local_dir.mkdir(parents=True, exist_ok=True)
+    
+    logging.info(f"Start: {repo_id}")
+    logging.info(f"Name File: {local_dir}")
+    logging.info("-" * 50)
 
-        self.download_dir.mkdir(parents=True, exist_ok=True)
+    downloaded_files = []
 
-    def _build_drive_url(self, file_id: str) -> str:
-        return f"https://drive.google.com/uc?id={file_id}&export=download"
-
-    def download_file(self, filename: str, file_id: str) -> None:
-        save_path = self.download_dir / filename
-
-        if save_path.exists():
-            logger.info("Model already exists: %s (skip)", save_path)
-            return
-
-        url = self._build_drive_url(file_id)
-        logger.info("Downloading %s ...", filename)
-
+    for file_name in file_list:
         try:
-            with requests.get(url, stream=True, timeout=60) as response:
-                response.raise_for_status()
-                with open(save_path, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=self.chunk_size):
-                        if chunk:
-                            f.write(chunk)
+            logging.info(f"Loading: {file_name}...")
+            file_path = hf_hub_download(
+                repo_id=repo_id,
+                filename=file_name,
+                local_dir=local_dir,
+                local_dir_use_symlinks=False
+            )
 
-            logger.info("Downloaded successfully: %s", filename)
+            logging.info(f"Successfully: {file_name}")
+            downloaded_files.append(file_path)
+            
+        except EntryNotFoundError:
+            logging.error(f"Error : File '{file_name}' is not exists in repo.")
+        except RepositoryNotFoundError:
+            logging.error(f"Error: Dont found Repo '{repo_id}'.")
+        except Exception as e:
+            logging.error(f"Error {file_name}: {e}")
+    logging.info("-" * 50)
+    logging.info(f"Success! Complete {len(downloaded_files)}/{len(file_list)} files.")
+    return downloaded_files
 
-        except requests.RequestException as exc:
-            logger.error("Failed to download %s: %s", filename, exc)
-            raise
-
-    def download_all(self) -> None:
-        """
-        Download all files in file_map
-        """
-        for filename, file_id in self.file_map.items():
-            self.download_file(filename, file_id)
+# --- Cấu hình ---
 
 
-MODEL_FILES = {
-    "best_pneumonia_classifier_mobilenetv2.pt": "FILE_ID_1",
-    "best_pneumonia_classifier.pt": "FILE_ID_2",
-    "mobilenetv2_lung_finetuned.onnx": "FILE_ID_3",
-    "mobilenetv2_lung_finetuned.onnx.data": "FILE_ID_4",
-    "resnet18_lung_finetuned.onnx": "FILE_ID_5",
-    "resnet18_lung_finetuned.onnx.data": "FILE_ID_6",
-}
-from pathlib import Path
-dowloader = ModelDownloader(
-    file_map=MODEL_FILES,
-    download_dir=Path(__file__).parent / "models",
-)
-dowloader.download_all()
+# --- Thực thi ---
+if __name__ == "__main__":
+    #download_models(MODEL_REPO, FILES_TO_DOWNLOAD)
+    MODEL_REPO = "Trank123/API_LungCancer"
+    FILES_TO_DOWNLOAD = [
+        "best_pneumonia_classifier.pt",
+        "best_pneumonia_classifier_mobilenetv2.pt",
+        "mobilenetv2_lung_finetuned.onnx",
+        "mobilenetv2_lung_finetuned.onnx.data",
+        "resnet18_lung_finetuned.onnx",
+        "resnet18_lung_finetuned.onnx.data"
+    ]
+    check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)

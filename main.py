@@ -11,6 +11,7 @@ from functools import partial
 from dotenv import load_dotenv
 from typing import Any , Annotated , List , Dict
 from pathlib import Path
+from model.dowload_model import download_models , check_folder
 from event.detect_gpu import Detect
 from event.detect_gradcam import GradCam
 import logging , re , os ,random , sys , uvicorn , io , time , base64 , asyncio , numpy as np
@@ -21,8 +22,22 @@ current_dir = Path(__file__).parent
 
 def pre_run():
     try:
+        MODEL_REPO = "Trank123/API_LungCancer"
+        FILES_TO_DOWNLOAD = [
+                        "best_pneumonia_classifier.pt",
+                        "best_pneumonia_classifier_mobilenetv2.pt",
+                        "mobilenetv2_lung_finetuned.onnx",
+                        "mobilenetv2_lung_finetuned.onnx.data",
+                        "resnet18_lung_finetuned.onnx",
+                        "resnet18_lung_finetuned.onnx.data"
+                    ]
+        
         detector = Detect()
         installer = GradCam()
+        
+        check_model = check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
+        if not check_model:
+            return False
         
         check_gpu = detector.install_library(min_cores=128)
         if not check_gpu:
@@ -109,12 +124,11 @@ async def load_model(
         LABELS = ['NORMAL', 'PNEUMONIA']
 
         if model == 'model-resnet':
-            onnx_path = current_dir / 'model/resnet18_lung_finetuned.onnx'
-            pt_path = current_dir / 'model/best_pneumonia_classifier.pt'
-
+            onnx_path = current_dir / 'model/models/resnet18_lung_finetuned.onnx'
+            pt_path = current_dir / 'model/models/best_pneumonia_classifier.pt'
             if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
-                raise HTTPException(status_code=500, detail="Model file not found on server")
-            
+                raise HTTPException(status_code=500, detail="Failed to download model files")
+                
             from model.restnet18_onnx_inference import ONNXInferenceModel
             start = time.perf_counter()
             restnet = ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.6)
@@ -163,8 +177,8 @@ async def load_model(
             }
 
         elif model == 'model-mobinet':
-            onnx_path = current_dir / 'model/mobilenetv2_lung_finetuned.onnx'
-            pt_path = current_dir / 'model/best_pneumonia_classifier_mobilenetv2.pt'
+            onnx_path = current_dir / 'model/models/mobilenetv2_lung_finetuned.onnx'
+            pt_path = current_dir / 'model/models/best_pneumonia_classifier_mobilenetv2.pt'
 
             if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
                 raise HTTPException(status_code=500, detail="Model file not found on server")

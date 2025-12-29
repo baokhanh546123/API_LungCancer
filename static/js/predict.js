@@ -208,6 +208,13 @@ elements.modelForm.addEventListener('submit', async (event) => {
         const data = await response.json(); // result structure depends on backend response
 
         if (data.status === "success"){
+            if (data.needs_reload){
+                showStatus('loading', 'Models Ready', 'Systems updated. Reloading page in 2s...', 0);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                return;
+            }
             updateInferenceUI(data , selectedFile); 
             showStatus('success', 'Analysis Complete', `Model ${data.model_used} finished.`);
         }else{
