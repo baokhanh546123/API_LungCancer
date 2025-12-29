@@ -69,7 +69,7 @@ git clone https://github.com/baokhanh546123/API_LungCancer.git
 
 ### Github
 - Access <a href = 'https://github.com/baokhanh546123/API_LungCancer'>Link</a>
-- Click to code and dowload zip 
+- Click to code green button and dowload zip 
 - Unzip
 
 
@@ -99,19 +99,20 @@ pip install -r requirements.txt
 ``` bash
 nano connect/connection.env 
 ```
-
+- Change username and password approriate then press <strong> <u> Ctrl + O , Enter and Ctrl + X  </u> </strong>
 ### Windows
 ``` bash
 notepad connect/connection.env
 ```
+- Change username and password approriate then press <strong> <u> Ctrl + S </u> </strong>
 
-- Change username and password approriate
-- For develop
+
+### Develop Mode
 ``` bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-- For run
+### Production
 #### Linux / macOS
 ``` bash 
     python3 main.py
