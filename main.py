@@ -24,30 +24,39 @@ def pre_run():
     try:
         MODEL_REPO = "Trank123/API_LungCancer"
         FILES_TO_DOWNLOAD = [
-                        "best_pneumonia_classifier.pt",
-                        "best_pneumonia_classifier_mobilenetv2.pt",
-                        "mobilenetv2_lung_finetuned.onnx",
-                        "mobilenetv2_lung_finetuned.onnx.data",
-                        "resnet18_lung_finetuned.onnx",
-                        "resnet18_lung_finetuned.onnx.data"
-                    ]
+            "best_pneumonia_classifier.pt",
+            "best_pneumonia_classifier_mobilenetv2.pt",
+            "mobilenetv2_lung_finetuned.onnx",
+            "mobilenetv2_lung_finetuned.onnx.data",
+            "resnet18_lung_finetuned.onnx",
+            "resnet18_lung_finetuned.onnx.data"
+        ]
         
-        detector = Detect()
-        installer = GradCam()
+        needs_download = not check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
         
-        check_model = check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
-        if not check_model:
-            return False
-        
-        check_gpu = detector.install_library(min_cores=128)
-        if not check_gpu:
-            return False
+        if needs_download:
+            logging.info("Model files missing. Starting automatic download from HF...")
             
-        check_gradcam = installer.install_grad_cam()
-        return check_gradcam
-    except Exception as e :
+            download_models(
+                repo_id=MODEL_REPO, 
+                file_list=FILES_TO_DOWNLOAD, 
+                target_subdir='model/models'
+            )
+            return True, True 
+
+        detector = Detect()
+        if not detector.install_library(min_cores=128):
+            logging.warning("Hardware requirements not met (min 128 cores).")
+
+        installer = GradCam()
+        if not installer.install_grad_cam():
+            logging.error("Failed to initialize Grad-CAM environment.")
+            return False, False
+            
+        return True, False
+    except Exception as e:
         logging.error(f"Lỗi trong quá trình pre_run: {e}")
-        return False
+        return False, False
 
 app = FastAPI(title="Chest X-ray Classification API",description="ONNX-based chest X-ray classification",version="1.0")
 
@@ -242,7 +251,7 @@ if __name__ == "__main__":
         print("\n" + "="*50)
         print("[SUCCESS] Môi trường hợp lệ. Đang khởi động Server...")
         print("="*50 + "\n")
-        uvicorn.run(app, host="127.0.0.1", port=8000 , reload = False)
+        uvicorn.run(app, host="127.0.0.1", port=8010 , reload = False)
     else:
         print("\n" + "!"*50)
         print("[FAILED] Thiếu thư viện hoặc phần cứng không đạt.")
