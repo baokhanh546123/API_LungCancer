@@ -13,11 +13,17 @@ from typing import Any , Annotated , List , Dict
 from pathlib import Path
 from event.detect_gpu import Detect
 from event.detect_gradcam import GradCam
-import logging , re , os ,random , sys , uvicorn , io , time , base64 , asyncio , numpy as np
+import logging , re , os ,random , sys , uvicorn , io , time , base64 , asyncio , numpy as np , threading
 
-logging.basicConfig(level=logging.INFO)
+import logging
+import sys
 
-current_dir = Path(__file__).parent 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
 
 def pre_run():
     try:
@@ -55,11 +61,12 @@ def pre_run():
     except Exception as e:
         logging.error(f"Error during pre_run: {e}")
         return False
+    
 
 app = FastAPI(title="Chest X-ray Classification API",description="ONNX-based chest X-ray classification",version="1.0")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+
+current_dir = Path(__file__).parent.resolve()
 
 @app.middleware("http")
 async def no_cache_middleware(request: Request, call_next):
@@ -69,10 +76,22 @@ async def no_cache_middleware(request: Request, call_next):
     response.headers["Expires"] = "0"
     return response
 
+app.mount("/static", StaticFiles(directory= current_dir / "static"), name="static")
+templates = Jinja2Templates(directory= str(current_dir / "templates"))
+
+#@app.on_event("startup")
+#async def startup_event():
+#    logging.info("Starting background pre-run tasks...")
+#    threading.Thread(target=pre_run , daemon=True).start()
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    members = [member for member in get_members_table(query='all')]
-    return templates.TemplateResponse("index.html", {"request": request, "members": members})
+    try:
+        members = [member for member in get_members_table(query='all')]
+        return templates.TemplateResponse("index.html", {"request": request, "members": members})
+    except Exception as e:
+        logging.error(f"Error in home route: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
     
 @app.get("/predict" , response_class=HTMLResponse)
@@ -241,6 +260,9 @@ async def load_model(
         logging.error(f"Server Error: {str(e)}")
         return {"status": "failed", "error": str(e)}
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 
@@ -249,7 +271,7 @@ if __name__ == "__main__":
         print("\n" + "="*50)
         print("[SUCCESS] Môi trường hợp lệ. Đang khởi động Server...")
         print("="*50 + "\n")
-        uvicorn.run(app, host="127.0.0.1", port=8010 , reload = False)
+        uvicorn.run(app, host="127.0.0.1", port=8000 , reload = False)
     else:
         print("\n" + "!"*50)
         print("[FAILED] Thiếu thư viện hoặc phần cứng không đạt.")
