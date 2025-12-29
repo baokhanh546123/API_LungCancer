@@ -37,6 +37,17 @@ a **clinician-friendly interface**.
 If not, download it here: [Python
 Downloads](https://www.python.org/downloads/)
 
+- You can check your computer have python , open terminate 
+``` bash 
+python3 --version
+```
+<b><i>Or</b></i>
+``` bash 
+python --version
+```
+
+If show <i>Python 3.13.7<i> , your computer have python else access to link and dowload it.
+
 ### 2. Dowload project 
 
 #### Git 
