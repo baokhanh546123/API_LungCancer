@@ -24,7 +24,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
-
 def pre_run():
     try:
         detector = Detect()
@@ -63,8 +62,7 @@ def pre_run():
         return False
     
 
-app = FastAPI(title="Chest X-ray Classification API",description="ONNX-based chest X-ray classification",version="1.0")
-
+app = FastAPI(title="Chest X-ray Classification API")
 
 current_dir = Path(__file__).parent.resolve()
 
@@ -78,11 +76,6 @@ async def no_cache_middleware(request: Request, call_next):
 
 app.mount("/static", StaticFiles(directory= current_dir / "static"), name="static")
 templates = Jinja2Templates(directory= str(current_dir / "templates"))
-
-#@app.on_event("startup")
-#async def startup_event():
-#    logging.info("Starting background pre-run tasks...")
-#    threading.Thread(target=pre_run , daemon=True).start()
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
