@@ -46,7 +46,7 @@ python3 --version
 python --version
 ```
 
-If show <i>Python 3.13.7<i> , your computer have python else access to link and dowload it.
+If show <i>Python 3.xx.x<i> , your computer have python else access to link and dowload it.
 
 ### 2. Dowload project 
 
