@@ -9,7 +9,6 @@ a **clinician-friendly interface**.
 ------------------------------------------------------------------------
 
 ## Features
-
 -   Upload and process lung X-ray images
 -   Interactive UI with smooth animations (GSAP)
 -   Backend powered by **FastAPI**
@@ -19,7 +18,6 @@ a **clinician-friendly interface**.
 ------------------------------------------------------------------------
 
 ## Tools & Libraries
-
 -   **FastAPI and JS** (Python backend)
 -   **HTML5 & CSS** (frontend design)
 -   **PostgreSQL** (database)
@@ -31,22 +29,35 @@ a **clinician-friendly interface**.
 
 ## Installation & Setup
 
-### 1. Install Python
+### 1.  Prerequisites
 
-- Make sure you have **Python 3.9+** installed.\
-If not, download it here: [Python
-Downloads](https://www.python.org/downloads/)
+Ensure the following are installed on your system:
+- Python 3.9 or higher (if not it , you can dowload [Here](https://www.python.org/downloads/))
+- PostgreSQL 
 
-- You can check your computer have python , open terminate 
+
+- Verify Python installation:
+
+#### Linux / macOS
+
 ``` bash 
 python3 --version
 ```
 <b><i>Or</b></i>
+
+#### Windows
+
 ``` bash 
 python --version
 ```
 
 If show <i>Python 3.xx.x<i> , your computer have python else access to link and dowload it.
+
+- You can dowload PostgreSQL , you can access to ChatGPT and entry to prompt
+``` prompt
+    You are a PostgreSQL expert, please provide detailed instructions on how to install PostgreSQL on [your platform] and create a schema named CNN with a default port of 5432. The schema should return a text or table format, presented in an easy-to-understand manner.
+```
+<h3>Please specify your platform as Windows, Linux, or macOS.</h3>
 
 ### 2. Dowload project 
 
@@ -82,7 +93,18 @@ pip install -r requirements.txt
 ```
 
 ### 4. Run the Application
+- Before you run the project, you have to change in .env
+#### Linux / macOS
+``` bash
+nano connect/connection.env 
+```
 
+### Windows
+``` bash
+notepad connect/connection.env
+```
+
+- Change username and password approriate
 - For develop
 ``` bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
