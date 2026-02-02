@@ -1,140 +1,126 @@
+# Pulmonary Carcinoma Detection Framework
 
-# Lung Cancer Detection Web Application
+**A Web-Based Diagnostic Interface Integrating Deep Learning and Clinician-Centric Design**
 
-This project is a **web-based system** for detecting lung cancer using
-chest X-ray images.\
-It integrates a modern web stack with lightweight animations to provide
-a **clinician-friendly interface**.
+---
 
-------------------------------------------------------------------------
+## Abstract
 
-## Features
--   Upload and process lung X-ray images
--   Interactive UI with smooth animations (GSAP)
--   Backend powered by **FastAPI**
--   Data stored in **PostgreSQL**   
--   Frontend built with **HTML & CSS**
--   Public web temporary **ngrok**
-------------------------------------------------------------------------
+This repository houses a **web-based diagnostic support system** designed to facilitate the early detection of pulmonary anomalies, specifically lung cancer, via chest X-ray imagery. The architecture integrates a high-performance **FastAPI** backend with a lightweight, interactive frontend. By utilizing **GSAP** (GreenSock Animation Platform), the system ensures a fluid Human-Computer Interaction (HCI) experience, while the core inference engine leverages **Deep Learning** methodologies (TensorFlow/PyTorch) to analyze radiological data.
 
-## Tools & Libraries
--   **FastAPI and JS** (Python backend)
--   **HTML5 & CSS** (frontend design)
--   **PostgreSQL** (database)
--   **GSAP** (animation library)
--   **Uvicorn** (server runner)
--   **Tensorflow && Pytorch** (Deep Learning library)
+> **Note:** The original documentation is available in Vietnamese [here](REAME_vi.md).
 
-------------------------------------------------------------------------
+---
 
-## Installation & Setup
+## 1. System Capabilities & Architecture
 
-### 1.  Prerequisites
+The application relies on a robust, multi-tier architecture designed for scalability and research deployment.
 
-Ensure the following are installed on your system:
-- Python 3.9 or higher (if not it , you can dowload [Here](https://www.python.org/downloads/))
-- PostgreSQL 
-- Git (That would be great.)
+### Core Features
+* **Radiological Image Processing:** Automated ingestion and preprocessing of raw X-ray input data for diagnostic inference.
+* **High-Fidelity Interface:** An interactive UI utilizing **GSAP** for sophisticated motion design, enhancing user engagement and visual feedback.
+* **Asynchronous Backend:** Powered by **FastAPI**, ensuring low-latency responses and high concurrency for server-side operations.
+* **Deep Learning Integration:** Deploys pre-trained convolutional neural networks (CNNs) via **TensorFlow** and **PyTorch** for binary or multi-class classification tasks.
 
+### Database
+The model development and validation processes utilize the following open-source radiological dataset:
+* **Source:** [Chest X-Ray Images (Pneumonia) - Kaggle](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia)
 
-Verify Python installation:
+### Technology Stack
+| Component | Technology | Description |
+| :--- | :--- | :--- |
+| **Runtime & Logic** | **Python 3.9+** | Core backend environment. |
+| **API Framework** | **FastAPI** | High-performance web framework. |
+| **Server** | **Uvicorn** | ASGI server implementation. |
+| **Machine Learning** | **TensorFlow / PyTorch** | Deep Learning libraries for inference. |
+| **Frontend** | **HTML5 / CSS3 / JS** | Structural and stylistic markup. |
+| **Animation** | **GSAP** | Advanced UI transition library. |
 
-#### Linux / macOS
+---
 
-``` bash 
-python3 --version
-```
-<b><i>Or</b></i>
+## 2. Prerequisites
 
-#### Windows
+Before deploying the application, ensure the host environment meets the following specifications:
 
-``` bash 
-python --version
-```
+1.  **Python Runtime:** Version **3.9** or higher.
+    * *Verify (Linux/macOS):* `python3 --version`
+    * *Verify (Windows):* `python --version`
+2.  **Version Control:** Git (Recommended for repository management).
 
-If show <i>Python 3.xx.x<i> , your computer have python else access to link and dowload it.
+---
 
-- You can dowload PostgreSQL , you can access to ChatGPT and entry to prompt
-``` prompt
-    You are a PostgreSQL expert, please provide detailed instructions on how to install PostgreSQL on [your platform] and create a schema named CNN with a default port of 5432. The schema should return a text or table format, presented in an easy-to-understand manner.
-```
-<h3>Please specify your platform as Windows, Linux, or macOS.</h3>
+## 3. Installation Protocol
 
-### 2. Dowload project 
+### Step 1: Repository Acquisition
 
-#### Git 
-``` bash
-git clone https://github.com/baokhanh546123/API_LungCancer.git
+Clone the source code to your local machine using Git or download the archive directly.
+
+```bash
+git clone https://github.com/baokhanh546123/API_LungCancer
 ```
 
-### Github
-- Access <a href = 'https://github.com/baokhanh546123/API_LungCancer'>Link</a>
-- Click to code green button and dowload zip 
-- Unzip
+### Step 2: Environment Configuration
+It is strictly recommended to isolate dependency management by establishing a virtual environment **(venv)**.
 
-
-### 3. Create Virtual Environment & Install Dependencies
-
-#### Windows
-
-``` bash
+**Windows**
+```bash
 cd API_LungCancer
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-#### Linux / macOS
-
-``` bash
+**Linux/MacOS**
+```bash
 cd API_LungCancer
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Run the Application
-- Before you run the project, you have to change in .env
-#### Linux / macOS
-``` bash
-nano connect/connection.env 
-```
-- Change username and password approriate then press <strong> <u> Ctrl + O , Enter and Ctrl + X  </u> </strong>
-### Windows
-``` bash
-notepad connect/connection.env
-```
-- Change username and password approriate then press <strong> <u> Ctrl + S </u> </strong>
+## 4. Execution Protocol
+Initialize the server in the mode appropriate for your use case.
 
-
-### Develop Mode
-``` bash
+### Development Mode (Hot Reloading)
+Recommended for debugging and active development cycles. The server will auto-restart upon code changes.
+```bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Production
-#### Linux / macOS
-``` bash 
-    python3 main.py
-```
-#### Windows
-``` bash 
-    python main.py
+### Production Mode
+Standard execution entry point for stable deployment.
+
+**Windows**
+```bash
+python main.py
 ```
 
-- The app will be available at **http://127.0.0.1:8000/**
+**Linux/MacOS**
+```bash
+python3 main.py
+```
 
+**Access Point**: Once initialized, the web interface is accessible via the local loopback address:
 
+    http://127.0.0.1:8000/
 
-------------------------------------------------------------------------
+## 5. Contribution & Feedback
+This project is open for academic and technical contributions. We welcome feedback regarding diagnostic accuracy, UI responsiveness, or architectural improvements.
+- Issue Tracking: Please submit pull requests or open issues via the [GitHub Repository](https://github.com/baokhanh546123/API_LungCancer).
+- Direct Contact: Send feedback, bug reports, or collaboration proposals via email [here](mailto:tranphucdangkhanh1011dl@gmail.com).
 
-## Feedback
+Your contributions are a vital component in the refinement of this diagnostic tool.
 
-If you try this project, please share your feedback, suggestions, or
-improvements.\
-Your input helps make the system better!
+## 5. Contribution & Feedback
 
---------------------------------------------
+**Author**: Trank 
 
-## Author
-Developed with using FastAPI, PostgreSQL, and GSAP animations.
+**Affiliation**: Dalat University 
+
+**Date of Release**: December 27, 2025
+
+### Disclaimer & License
+This software is developed exclusively for **educational and research purposes**.
+1. **Attribution**: Any form of reproduction, modification, or redistribution of the source code, in whole or in part, requires explicit permission from the author and proper citation of the source.
+2. **Non-Commercial**: Use of this project for commercial or for-profit activities is strictly prohibited without prior written consent.
+
