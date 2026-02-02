@@ -38,6 +38,21 @@ Quá trình xây dựng, huấn luyện và đánh giá mô hình tham chiếu b
 
 * **Nguồn dữ liệu:** Chest X-Ray Images (Pneumonia) – Kaggle
 
+
+### Thẩm định Lâm sàng & Tuân thủ Pháp quy (Tiêu chuẩn FDA/CE)
+Nhằm đáp ứng các tiêu chuẩn quốc tế về thiết bị y tế (như FDA 21 CFR hoặc dấu CE đối với Phần mềm dưới dạng Thiết bị Y tế - SaMD), khung vận hành tích hợp các chỉ số chẩn đoán sau:
+
+- Quyết định Nhị phân (Binary Decision): Phân loại danh mục dứt khoát dựa trên suy luận của mô hình.
+
+- Điểm số Quyết định (Decision Score): Kết quả dạng số thô thể hiện giá trị đánh giá nội bộ của mô hình.
+
+- Ngưỡng phê duyệt (Approved Threshold): Điểm cắt (cut-off) đã hiệu chuẩn, được tối ưu hóa cho độ nhạy và độ đặc hiệu lâm sàng.
+
+- Xác suất Rủi ro (Prisk​): Khả năng thống kê được định lượng về sự hiện diện của bệnh lý.
+
+- Độ tin cậy Dự đoán (Prediction Confidence): Chỉ số cho biết mức độ chắc chắn đối với kết luận của thuật toán.
+
+- Miễn trừ trách nhiệm pháp quy: Hệ thống này được phân loại là Chỉ hỗ trợ bởi AI; mục đích nhằm hỗ trợ bác sĩ lâm sàng và không được sử dụng như một công cụ chẩn đoán độc lập mà không có sự giám sát chuyên môn y tế.
 ---
 
 ## 2. Ngăn xếp Công nghệ (Technology Stack)

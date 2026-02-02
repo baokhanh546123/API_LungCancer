@@ -8,7 +8,7 @@
 
 This repository houses a **web-based diagnostic support system** designed to facilitate the early detection of pulmonary anomalies, specifically lung cancer, via chest X-ray imagery. The architecture integrates a high-performance **FastAPI** backend with a lightweight, interactive frontend. By utilizing **GSAP** (GreenSock Animation Platform), the system ensures a fluid Human-Computer Interaction (HCI) experience, while the core inference engine leverages **Deep Learning** methodologies (TensorFlow/PyTorch) to analyze radiological data.
 
-> **Note:** The original documentation is available in Vietnamese [here](REAME_vi.md).
+> **Note:** The original documentation is available in Vietnamese [here](README_vi.md).
 
 ---
 
@@ -25,6 +25,16 @@ The application relies on a robust, multi-tier architecture designed for scalabi
 ### Database
 The model development and validation processes utilize the following open-source radiological dataset:
 * **Source:** [Chest X-Ray Images (Pneumonia) - Kaggle](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia)
+
+### Clinical Validation & Regulatory Compliance (FDA/CE Standards)
+To align with international medical device standards (such as FDA 21 CFR or CE marking for SaMD), the framework incorporates the following diagnostic metrics:
+
+* **Binary Decision:** A definitive categorical classification based on model inference.
+* **Decision Score:** The raw numerical output representing the model's internal evaluation.
+* **Approved Threshold:** A calibrated cut-off point optimized for clinical sensitivity and specificity.
+* **Risk Probabilities ($P_{risk}$):** Quantified statistical likelihood of the presence of pathology.
+* **Prediction Confidence:** A metric indicating the certainty level of the algorithm’s conclusion.
+* **Regulatory Disclaimer:** This system is classified as **AI-Support Only**; it is intended to assist clinicians and should not be used as a standalone diagnostic tool without professional medical oversight.
 
 ### Technology Stack
 | Component | Technology | Description |
