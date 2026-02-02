@@ -92,40 +92,38 @@ section .bg .clip-text {
     overflow: hidden;
 }
 
-/* Background images from PDF screenshots (replace with actual /static/images/ paths) */
 .first .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/title-slide.png"); /* Page 1 screenshot */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/title-slide.png"); 
 }
 
 .second .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/contents-slide.png"); /* Page 2 */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/contents-slide.png"); 
 }
 
 .third .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter1-slide.png"); /* Pages 3-4 aggregated */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter1-slide.png"); 
 }
 
 .fourth .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter2-slide.png"); /* Pages 5-7 */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter2-slide.png"); 
 }
 
 .fifth .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter3-slide.png"); /* Pages 8-12 */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter3-slide.png"); 
 }
 
 .sixth .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter4-slide.png"); /* Pages 13-16 */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter4-slide.png"); 
 }
 
 .seventh .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter5-slide.png"); /* Pages 17-18 */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/chapter5-slide.png"); 
 }
 
 .eighth .bg {
-    background-image: var(--bg-gradient), url("https://i.imgur.com/references-slide.png"); /* Page 19 */
+    background-image: var(--bg-gradient), url("https://i.imgur.com/references-slide.png"); 
 }
 
-/* Additional styles for lists and text */
 ul, ol {
     list-style-position: inside;
     text-align: left;

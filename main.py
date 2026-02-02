@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse ,JSONResponse , RedirectResponse , Re
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
-from connect.pysql import get_members_table , produre_add_members , produre_delete_members , produre_update_members , length_member_id
+#from connect.pysql import get_members_table , produre_add_members , produre_delete_members , produre_update_members , length_member_id
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from dotenv import load_dotenv
@@ -80,8 +80,7 @@ templates = Jinja2Templates(directory= str(current_dir / "templates"))
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     try:
-        members = [member for member in get_members_table(query='all')]
-        return templates.TemplateResponse("index.html", {"request": request, "members": members})
+        return templates.TemplateResponse("index.html", {"request": request})
     except Exception as e:
         logging.error(f"Error in home route: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
