@@ -121,7 +121,7 @@ This project is open for academic and technical contributions. We welcome feedba
 
 Your contributions are a vital component in the refinement of this diagnostic tool.
 
-## 5. Contribution & Feedback
+## 6. Infomation Author
 
 **Author**: Trank 
 
@@ -129,7 +129,7 @@ Your contributions are a vital component in the refinement of this diagnostic to
 
 **Date of Release**: December 27, 2025
 
-### Disclaimer & License
+## 7. Disclaimer & License
 This software is developed exclusively for **educational and research purposes**.
 1. **Attribution**: Any form of reproduction, modification, or redistribution of the source code, in whole or in part, requires explicit permission from the author and proper citation of the source.
 2. **Non-Commercial**: Use of this project for commercial or for-profit activities is strictly prohibited without prior written consent.
