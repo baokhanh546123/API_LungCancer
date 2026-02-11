@@ -55,3 +55,4 @@ motor
 dnspython
 python-dotenv
 huggingface_hub
+prometheus-client
