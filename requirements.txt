@@ -17,3 +17,4 @@ motor
 dnspython
 python-dotenv
 huggingface_hub
+opencv-python-headless
