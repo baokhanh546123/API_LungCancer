@@ -12,12 +12,41 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollToPlugin.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <meta name="description" content="Explainable deep learning (xAI + Grad-CAM) for lung cancer detection with CNNs." />
   <meta property="og:title" content="CNN Lung Cancer Detection" />
   <meta property="og:description" content="xAI + Grad-CAM heatmaps for transparent diagnostics." />
   <meta property="og:type" content="website" />
 
   <style>
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+    @layer utilities {
+    .animate-pulse-slow {
+      animation: pulse 12s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .delay-1000 { animation-delay: 1s; }
+    .delay-2000 { animation-delay: 2s; }
+    .delay-3000 { animation-delay: 3s; }
+
+    .animate-gradient-text {
+      background-size: 200% 200%;
+      animation: gradient-text-shift 12s ease infinite;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50%      { opacity: 0.8; transform: scale(1.05); }
+  }
+
+  @keyframes gradient-text-shift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   .section {
     transition: background-color 0.4s ease-in-out;
   }
@@ -142,7 +171,6 @@
   border-radius: 1rem;
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
-
   </style>
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">
@@ -153,36 +181,50 @@
         <span class="font-extrabold tracking-tight text-blue-700">DaLat University</span>
         </div>
       <nav class="hidden md:flex items-center space-x-6">
-        <a href="#about" class="hover:text-blue-700">About</a>
-        <a href="#cnns" class="hover:text-blue-700">CNNs</a>
-        <a href="#gradcam" class="hover:text-blue-700">Grad‑CAM</a>
-        <a href="#cta" class="hover:text-blue-700">Try Demo</a>
+        <a href="#about" data-track="nav_click" data-label="About" class="hover:text-blue-700">About</a>
+        <a href="#cnns" data-track="nav_click" data-label="CNNs" class="hover:text-blue-700">CNNs</a>
+        <a href="#gradcam" data-track="nav_click" data-label="Grad‑CAM" class="hover:text-blue-700">Grad‑CAM</a>
+        <a href="#cta" data-track="nav_click" data-label="Try Demo" class="hover:text-blue-700">Try Demo</a>
       </nav>
       <button id="navToggle" class="md:hidden px-3 py-2 rounded-lg border">Menu</button>
     </div>
 
     <div id="mobileMenu" class="md:hidden hidden border-t bg-white">
       <div class="max-w-6xl mx-auto px-4 py-3 space-y-2">
-        <a href="#about" class="block">About</a>
-        <a href="#cnns" class="block">CNNs</a>
-        <a href="#gradcam" class="block">Grad‑CAM</a>
-        <a href="#cta" class="block">Try Demo</a>
+        <a href="#about" data-track="nav_click" data-label="About" class="block">About</a>
+        <a href="#cnns" data-track="nav_click" data-label="CNNs" class="block">CNNs</a>
+        <a href="#gradcam" data-track="nav_click" data-label="Grad-CAM" class="block">Grad‑CAM</a>
+        <a href="#cta" data-track="nav_click" data-label="Try Demo" class="block">Try Demo</a>
       </div>
     </div>
   </header>
 
-  <section id="top" class="relative h-screen flex items-center hero-bg text-white overflow-hidden">
-    <div class="relative max-w-4xl mx-auto px-6 text-center">
-      <h1 class="text-4xl sm:text-6xl font-extrabold leading-tight mb-6 reveal">Transparent AI for Lung Cancer Detection</h1>
-      <p class="text-lg sm:text-xl text-blue-100 mb-8 reveal">
-        We combine CNNs with xAI (Grad‑CAM) to surface visual evidence—so predictions aren't a black box.
-      </p>
-      <div class="reveal">
-        <a href="#about" class="inline-block px-6 py-3 rounded-xl bg-white text-blue-700 font-semibold shadow hover:shadow-lg transform hover:-translate-y-0.5 transition">Learn more</a>
-        <a href="#cta" class="inline-block ml-3 px-6 py-3 rounded-xl border border-white font-semibold hover:bg-white hover:text-blue-700 transition">Run a demo</a>
-      </div>
-    </div>
-  </section>
+  <section id="top" class="relative min-h-screen flex items-center justify-center text-white overflow-hidden bg-[#0a0a0f]">
+  
+  <div id="gradient-bg" class="absolute inset-0 bg-gradient-to-br from-red-600 via-purple-900 to-pink-700 opacity-90"></div>
+
+  <div class="absolute -top-20 -left-20 w-[600px] h-[600px] bg-red-500/30 rounded-full blur-3xl animate-pulse-slow"></div>
+  <div class="absolute -bottom-20 -right-20 w-[700px] h-[700px] bg-purple-600/25 rounded-full blur-3xl animate-pulse-slow delay-1000"></div>
+  <div class="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-pink-500/20 rounded-full blur-[180px] animate-pulse-slow delay-2000"></div>
+  <div class="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] bg-green-500/20 rounded-full blur-[140px] animate-pulse-slow delay-3000"></div>
+  
+  <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
+    <h1 id="hero-heading" class="text-4xl sm:text-7xl font-extrabold leading-tight mb-6 transition-all duration-1000 transform translate-y-0 opacity-100 text-transparent bg-clip-text bg-gradient-to-r from-red-200 to-white">
+      Transparent <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-200 to-white">AI for Lung Cancer</span> Detection
+    </h1>
+    <p id="hero-paragraph" class="text-lg sm:text-2xl text-red-100 mb-10 max-w-2xl mx-auto leading-relaxed opacity-90">
+      Bridging the gap between deep learning and clinical trust. We use
+      <span class="font-mono bg-red-700 px-2 py-1 rounded">Grad‑CAM</span>
+      to visualize exactly what the AI sees.
+    </p>
+  </div>
+
+  <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce opacity-50">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+    </svg>
+  </div>
+</section>
 
   <section id="about" class="section min-h-screen flex items-center">
     <div class="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-10">
@@ -208,7 +250,7 @@
     <p class="text-lg text-gray-700 leading-relaxed mb-6 reveal">
       We use <strong>Paul Mooney's Lung Disease dataset</strong> from Kaggle 
       (<a href="https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia" 
-          target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">View dataset</a>). 
+          target="_blank" rel="noopener noreferrer" class="text-blue-600 underline" data-track="nav_click" data-label="View Data">View dataset</a>). 
       It contains <strong>5,856 chest X-ray images</strong> across multiple categories:
     </p>
 
@@ -239,7 +281,7 @@
         <p class="text-lg text-gray-700 mb-4 reveal">
           Convolutional Neural Networks are designed for grid‑like data (e.g., images). They learn spatial hierarchies of
           features using convolutional filters, which makes them effective for classification, detection, and segmentation.
-          Learn more <a href="https://www.datacamp.com/tutorial/introduction-to-convolutional-neural-networks-cnns" target="_blank" class="text-blue-600 underline">here</a>.
+          Learn more <a href="https://www.datacamp.com/tutorial/introduction-to-convolutional-neural-networks-cnns" target="_blank" class="text-blue-600 underline" data-track="nav_click" data-label="CNNs About">here</a>.
         </p>
         <div class="cnn-steps grid md:grid-cols-3 gap-6">
           <div class="cnn-card reveal">
@@ -252,7 +294,7 @@
           </div>
           <div class="cnn-card reveal">
             <h4>Activation</h4>
-            <p>Apply <a href="https://blog.dailydoseofds.com/p/a-visual-and-intuitive-guide-to-what" target="_blank" rel="noopener noreferrer">ReLU</a> → keeps positives, avoids vanishing gradient.</p>
+            <p>Apply <a href="https://blog.dailydoseofds.com/p/a-visual-and-intuitive-guide-to-what" target="_blank" rel="noopener noreferrer" data-track="nav_click" data-label="ReLU About">ReLU</a> → keeps positives, avoids vanishing gradient.</p>
           </div>
           <div class="cnn-card reveal">
             <h4>Pooling</h4>
@@ -294,50 +336,81 @@
   </div>
 </section>
 
-<section id="people" class="section min-h-screen flex items-center justify-center">
-        <div class="max-w-3xl mx-auto px-6 people-list">
-            <h2 class="text-2xl font-bold mb-4 text-blue-700">Our Team</h2>
-            <ul role="list">
-              <li class="mb-4 flex items-center space-x-4">
-                <i class="bi bi-person-circle"></i>
-                <div>
-                  <p class="font-semibold"><a href="https://sites.google.com/view/vophuongbinh/home/about?authuser=0" target="_blank">Mr.Vo Phuong Binh</a></p>
-                  <p class="text-sm text-gray-600">Thesis supervisor</p>
-                </div>
-              </li>
-              <li class="mb-4 flex items-center space-x-4">
-                <i class="bi bi-person-circle"></i>
-                <div>
-                  <p class="font-semibold">Tran Thi B</p>
-                  <p class="text-sm text-gray-600">Machine Learning Engineer</p>
-                </div>
-              </li>
-              <li class="mb-4 flex items-center space-x-4">
-                <i class="bi bi-person-circle"></i>
-                <div>
-                  <p class="font-semibold">Le Van C</p>
-                  <p class="text-sm text-gray-600">Frontend Developer</p>
-                </div>
-              </li>
-              <li class="flex items-center space-x-4">
-                <i class="bi bi-person-circle"></i>
-                <div>
-                  <p class="font-semibold">Pham Thi D</p>
-                  <p class="text-sm text-gray-600">Research Assistant</p>
-                </div>
-              </li>
-            </ul>
-        </div>
-    </section>
+<section id="people" class="section py-20 md:py-28 bg-gray-50 overflow-hidden">
+  <div class="max-w-5xl mx-auto px-6 lg:px-8">
+    
+    <div class="title-animate text-center mb-16">
+      <h2 class="text-4xl md:text-5xl font-extrabold text-black mb-4 tracking-tight ">
+        Our Team
+      </h2>
+      <div class="h-1.5 w-20 bg-blue-600 mx-auto rounded-full"></div>
+    </div>
 
-  </section>
+    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-2 text-blue-600">
+      
+      <div class="team-card group flex items-center gap-5 p-6 bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 cursor-pointer">
+        <div class="text-5xl text-gray-300 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-500">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div>
+          <p class="font-bold text-xl text-black group-hover:text-blue-600 transition-colors duration-300">
+            <a href="https://sites.google.com/view/vophuongbinh/home/about?authuser=0" 
+               target="_blank" rel="noopener noreferrer" class="no-underline" data-track="nav_click" data-label="Link1">
+              Mr. Vo Phuong Binh
+            </a>
+          </p>
+          <p class="text-sm text-gray-700 font-medium uppercase tracking-wider mt-1">Thesis Supervisor</p>
+        </div>
+      </div>
+
+      <div class="team-card group flex items-center gap-5 p-6 bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 cursor-pointer">
+        <div class="text-5xl text-gray-300 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-500">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div>
+          <p class="font-bold text-xl text-black group-hover:text-blue-600 transition-colors duration-300">
+            Nguyen Ngoc Nhi
+          </p>
+          <p class="text-sm text-gray-500 font-medium uppercase tracking-wider mt-1">Team Leader</p>
+        </div>
+      </div>
+
+      <div class="team-card group flex items-center gap-5 p-6 bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 cursor-pointer">
+        <div class="text-5xl text-gray-300 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-500">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div>
+          <p class="font-bold text-xl text-black group-hover:text-blue-600 transition-colors duration-300">
+            <a href="https://taplink.cc/tranphucdangkhanh" target="_blank" rel="noopener noreferrer" class="no-underline" data-track="nav_click" data-label="Link3">
+              Tran Phuc Dang Khanh
+            </a>
+          </p>
+          <p class="text-sm text-gray-500 font-medium uppercase tracking-wider mt-1">Team Member</p>
+        </div>
+      </div>
+
+      <div class="team-card group flex items-center gap-5 p-6 bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100 cursor-pointer">
+        <div class="text-5xl text-gray-300 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-500">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div>
+          <p class="font-bold text-xl text-black group-hover:text-blue-600 transition-colors duration-300">
+            Huynh Dong Gia Te
+          </p>
+          <p class="text-sm text-gray-500 font-medium uppercase tracking-wider mt-1">Team Member</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
   <section id="cta" class="section min-h-[] flex items-center">
     <div class="max-w-3xl mx-auto px-6 text-center">
       <h3 class="text-3xl sm:text-4xl font-bold mb-4 reveal">Try the Demo</h3>
       <p class="mb-6 text-gray-700 reveal">Upload a chest X‑ray. We'll run the model and produce a prediction with a Grad‑CAM explanation.</p>
       <form class="reveal" id="uploadForm">
-        <button type="button" id = "runModelBtn" class="inline-block px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow hover:shadow-lg transform hover:-translate-y-0.5 transition btn btn-primary" data-bs-toggle="modal" data-bs-target="#loadingModal">
+        <button type="button" id = "runModelBtn" class="inline-block px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow hover:shadow-lg transform hover:-translate-y-0.5 transition btn btn-primary" data-bs-toggle="modal" data-bs-target="#loadingModal" data-track="nav_click" data-label="RunModel">
           Run model
         </button>
       </form>
@@ -363,9 +436,6 @@
   </div>
 </div>
 
-
-
-
   <footer class="py-8 text-center text-sm text-gray-500 flex flex-col items-center space-y-2">
   <div>
     © <span id="year"></span> Dalat University - Department of Mathematics and Information · All rights reserved.
@@ -373,12 +443,12 @@
   <div class="flex space-x-3">
     <a href="https://www.facebook.com/DalatUni/?locale=vi_VN" 
        target="_blank" rel="noopener noreferrer" 
-       class="text-blue-600 hover:text-blue-800 text-lg">
+       class="text-blue-600 hover:text-blue-800 text-lg" data-track="nav_click" data-label="facebook">
       <i class="bi bi-facebook"></i>
     </a>
     <a href="https://dlu.edu.vn/" 
        target="_blank" rel="noopener noreferrer" 
-       class="text-blue-600 hover:text-blue-800 text-lg">
+       class="text-blue-600 hover:text-blue-800 text-lg" data-track="nav_click" data-label="lms">
       <i class="bi bi-three-dots"></i>
     </a>
   </div>
@@ -401,11 +471,11 @@
 
   const sections = gsap.utils.toArray('.section');
   sections.forEach((sec) => {
-    const items = sec.querySelectorAll('.reveal');
+    const items = sec.querySelectorAll('.reveal > *');
     if (!items.length) return;
 
     if (sec.classList.contains("scroll-left")) {
-      gsap.from(items, {
+        gsap.from(items, {
         opacity: 0,
         x: -60,
         duration: 1,
@@ -414,7 +484,6 @@
         scrollTrigger: {
           trigger: sec,
           start: "top 80%",
-          end: "bottom 30%",
           toggleActions: "play none none reverse"
         }
       });
@@ -428,7 +497,6 @@
         scrollTrigger: {
           trigger: sec,
           start: "top 80%",
-          end: "bottom 30%",
           toggleActions: "play none none reverse"
         }
       });
@@ -460,6 +528,151 @@
   }
 });
 
+const tl = gsap.timeline({ repeat: -1, yoyo: false });
+
+// Background transitions
+tl.to("#gradient-bg", {
+  duration: 4,
+  ease: "sine.inOut",
+  background: "linear-gradient(to bottom right, #dc2626, #7c3aed, #ec4899)"  // red-purple-pink
+})
+.to("#gradient-bg", {
+  duration: 4,
+  ease: "sine.inOut",
+  background: "linear-gradient(to bottom right, #7c3aed, #ec4899, #10b981)"  // purple-pink-green
+})
+.to("#gradient-bg", {
+  duration: 4,
+  ease: "sine.inOut",
+  background: "linear-gradient(to bottom right, #ec4899, #10b981, #06b6d4)"  // pink-green-cyan
+})
+.to("#gradient-bg", {
+  duration: 4,
+  ease: "sine.inOut",
+  background: "linear-gradient(to bottom right, #10b981, #06b6d4, #dc2626)"  // green-cyan-red
+});
+
+
+
+tl.to("#hero-heading", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #fca5a5, #fdf4ff)"  // red-200 to purple-100-ish
+}, 0)  // Start at same time as first bg
+.to("#hero-heading span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #fca5a5, #fdf4ff)" 
+}, 0)
+.to("#hero-paragraph", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  color: "#fecaca"  // red-200
+}, 0)
+.to("#hero-paragraph span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundColor: "#b91c1c"  // red-700 (darker for inline bg)
+}, 0);
+
+tl.to("#hero-heading", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #d8b4fe, #fdf4ff)"  // purple-200 to pink-100-ish
+}, 8)
+.to("#hero-heading span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #d8b4fe, #fdf4ff)" 
+}, 8)
+.to("#hero-paragraph", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  color: "#e9d5ff"  // purple-200
+}, 8)
+.to("#hero-paragraph span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundColor: "#6b21a8"  // purple-700
+}, 8);
+
+tl.to("#hero-heading", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #fbcfe8, #d1fae5)"  // pink-200 to green-100
+}, 16)
+.to("#hero-heading span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #fbcfe8, #d1fae5)" 
+}, 16)
+.to("#hero-paragraph", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  color: "#fad1e3"  // pink-200
+}, 16)
+.to("#hero-paragraph span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundColor: "#be185d"  // pink-700
+}, 16);
+
+tl.to("#hero-heading", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #bbf7d0, #cffafe)"  // green-200 to cyan-100
+}, 24)
+.to("#hero-heading span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #bbf7d0, #cffafe)" 
+}, 24)
+.to("#hero-paragraph", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  color: "#bbf7d0"  // green-200
+}, 24)
+.to("#hero-paragraph span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundColor: "#15803d"  // green-700
+}, 24);
+
+// Back to start (cyan to red, but we loop anyway)
+tl.to("#hero-heading", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #a5f3fc, #fee2e2)"  // cyan-200 to red-100
+}, 32)
+.to("#hero-heading span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundImage: "linear-gradient(to right, #a5f3fc, #fee2e2)" 
+}, 32)
+.to("#hero-paragraph", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  color: "#a5f3fc"  // cyan-200
+}, 32)
+.to("#hero-paragraph span", { 
+  duration: 4, 
+  ease: "sine.inOut",
+  backgroundColor: "#0e7490"  // cyan-700
+}, 32);
+
+gsap.utils.toArray(".rounded-full").forEach((orb, i) => {
+  gsap.to(orb, {
+    x: "random(-60, 60)",
+    y: "random(-60, 60)",
+    rotation: "random(-15, 15)",
+    duration: "random(20, 40)",
+    ease: "sine.inOut",
+    repeat: -1,
+    yoyo: true,
+    delay: i * 2
+  });
+});
+
 gsap.from(".gradcam-text", {
   x: 100,
   opacity: 0,
@@ -471,19 +684,30 @@ gsap.from(".gradcam-text", {
   }
 });
 
-  gsap.from("#people li", {
-    y: 40,
-    opacity: 0,
-    duration: 0.8,
-    stagger: 0.15,
-    ease: "power2.out",
-    scrollTrigger: {
-      trigger: "#people",
-      start: "top 80%",
-      end: "bottom 30%",
-      toggleActions: "play none none reverse"
-    }
-  });
+gsap.from(".section-title", {
+  y: 30,
+  opacity: 0,
+  duration: 1,
+  ease: "power3.out",
+  scrollTrigger: {
+    trigger: "#people",
+    start: "top 85%",
+  }
+});
+
+gsap.from(".team-card", {
+  y: 60,                // Tăng độ trễ di chuyển để thấy rõ sự chuyển động
+  opacity: 0,
+  duration: 1,       // Các card xuất hiện lần lượt cách nhau 0.2s
+  ease: "power2.out",    // Kiểu chuyển động mượt và nhanh dần
+  scrollTrigger: {
+    trigger: "#people",
+    start: "top 90%",   // Kích hoạt khi cuộn đến 75% màn hình
+    toggleActions: "play none none reverse" 
+  }
+});
+
+
 
   if (!reduce) {
     const tl = gsap.timeline();
@@ -505,6 +729,26 @@ runBtn.addEventListener("click", () => {
     window.location.href = "{{ url_for('test') }}"
   }, 2500);
 });
+
+  let lastScrollTime = Date.now();
+  // theo doi do sau cuon tran 
+  window.addEventListener('scroll', () => {
+    const scrollPercent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+    // Chỉ gửi dữ liệu mỗi khi người dùng cuộn thêm 25% để tránh làm quá tải server
+    if (scrollPercent % 25 === 0) {
+        fetch(`/track-scroll?depth=${scrollPercent}`, { method: 'POST' });
+    }
+});
+
+  document.querySelectorAll('[data-track]').forEach(element => {
+    element.addEventListener('click', () => {
+        const label = element.getAttribute('data-label');
+        // Tra du lieu ve bang post
+        fetch(`/track-click?button_name=${encodeURIComponent(label)}`, { method: 'POST' });
+    });
+});
+
+
   </script>
   
 </body>
