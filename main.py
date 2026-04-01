@@ -40,12 +40,13 @@ def pre_run():
         from model.dowload_model import download_models , check_folder
         MODEL_REPO = "Trank123/API_LungCancer"
         FILES_TO_DOWNLOAD = [
-            "best_pneumonia_classifier.pt",
-            "best_pneumonia_classifier_mobilenetv2.pt",
-            "mobilenetv2_lung_finetuned.onnx",
-            "mobilenetv2_lung_finetuned.onnx.data",
-            "resnet18_lung_finetuned.onnx",
-            "resnet18_lung_finetuned.onnx.data"
+        "best_pneumonia_classifier.pt",
+        "best_pneumonia_classifier_mobilenetv2.pt",
+        "mobilenetv2_lung_finetuned.onnx",
+        "mobilenetv2_lung_finetuned.onnx.data",
+        "resnet18_lung_finetuned.onnx",
+        "resnet18_lung_finetuned.onnx.data",
+        "keras_cnn_xray.onnx"
         ]
         is_model_ready = check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
         if not is_model_ready:
@@ -243,6 +244,55 @@ async def load_model(
                      "gradcam" : overlay_base64 if overlay_base64 is not None else 'HTTP 500 Error'
                 }
             }
+        elif model == "model-handmade":
+            onnx_path = current_dir / 'model/models/keras_cnn_xray.onnx'
+            #pt_path = current_dir / 'model/models/best_pneumonia_classifier_mobilenetv2.pt'
+
+            #if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
+            #    raise HTTPException(status_code=500, detail="Model file not found on server")
+            
+            from model.handmake_onnx_inference import Handmake_ONNXInferenceModel
+            start = time.perf_counter()
+            hm = Handmake_ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.75)
+            #predict
+            result = mobilenet.predict(image)
+            if 'Error' in result:
+                return {"status": "error", "message": result['Error']}
+            loop = asyncio.get_event_loop()
+            grad_cam_res = await loop.run_in_executor(
+                executor,
+                partial(mobilenet.gradcam_for_img, image, mobilenet.image_transforms, method='gradcam')
+            )
+            if not grad_cam_res.get('success', False):
+                error_msg = grad_cam_res.get('error', 'Unknown error')
+                logging.error(f"Grad-CAM failed: {error_msg}")
+                return {
+                    "success": False,
+                    "message": error_msg
+                }
+            
+            overlay_base64 = encode_img_to_base64(grad_cam_res['cam_overlay'] , format='PNG')
+            if not overlay_base64:
+                raise ValueError("Failed to encode Grad-CAM images")
+            
+            end = time.perf_counter()
+            delta = float(end - start)
+            return {
+                "status": "success", 
+                "model_used": model,
+                "result": {
+                    'prediction_label': result.get('clinical_decision'),
+                    'decision_score': result.get('decision_score'),
+                    'prediction_confidence': result.get('prediction_confidence'),
+                    'raw_probabilities': result.get('risk_probability'),
+                    'decision_threshold': result.get('decision_threshold'),
+                    'interpretation': result.get('interpretation'),
+                    "run_time": round(delta, 4)
+                },
+                "images" : {
+                     "gradcam" : overlay_base64 if overlay_base64 is not None else 'HTTP 500 Error'
+                }
+            }
             
         else:
             raise HTTPException(status_code=400, detail="Invalid model selection")
@@ -263,7 +313,7 @@ if __name__ == "__main__":
         print("\n" + "="*50)
         print("[SUCCESS] Môi trường hợp lệ. Đang khởi động Server...")
         print("="*50 + "\n")
-        uvicorn.run(app, host="127.0.0.1", port=8000 , reload = False)
+        uvicorn.run(app, host="127.0.0.11", port=8000 , reload = False)
     else:
         print("\n" + "!"*50)
         print("[FAILED] Thiếu thư viện hoặc phần cứng không đạt.")
