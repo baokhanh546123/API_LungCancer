@@ -59,10 +59,6 @@ def download_models(repo_id, file_list, target_subdir='model/models'):
     logging.info(f"Success! Complete {len(downloaded_files)}/{len(file_list)} files.")
     return downloaded_files
 
-# --- Cấu hình ---
-
-
-# --- Thực thi ---
 if __name__ == "__main__":
     #download_models(MODEL_REPO, FILES_TO_DOWNLOAD)
     MODEL_REPO = "Trank123/API_LungCancer"
@@ -72,6 +68,7 @@ if __name__ == "__main__":
         "mobilenetv2_lung_finetuned.onnx",
         "mobilenetv2_lung_finetuned.onnx.data",
         "resnet18_lung_finetuned.onnx",
-        "resnet18_lung_finetuned.onnx.data"
+        "resnet18_lung_finetuned.onnx.data",
+        "keras_cnn_xray.onnx"
     ]
     check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
