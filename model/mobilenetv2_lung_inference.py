@@ -4,12 +4,14 @@ from torchvision import transforms
 from pytorch_grad_cam import GradCAM, GradCAMPlusPlus, EigenCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
-from PIL import Image
 from pathlib import Path
 from typing import Union , Dict , Optional
-#from filter_image_class import ImageValidator
-from model.filter_image_class import ImageValidator
+from filter_image_class import ImageValidator
+from event.detect_gpu import Detect
+#from model.filter_image_class import ImageValidator
+
 import numpy as np , logging , onnxruntime as ort , io , matplotlib.pyplot as plt , cv2 , torch , torch.nn as nn , torch.nn.functional as F
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +28,7 @@ class Mobinet_ONNXInferenceModel:
     ):
         assert len(labels) == 2, "Labels list must contain exactly two elements (e.g., ['NORMAL', 'PNEUMONIA'])."
 
+        self._detector = Detect()
         self.onnx_path = onnx_path
         self.pt_path = pt_path
         
@@ -47,7 +50,16 @@ class Mobinet_ONNXInferenceModel:
             )
         ])
 
-        self.device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        info = self._detector.info()
+        
+        info = self.info()
+        os = info['os']
+        vendor = info['vendor']
+
+        if os == 'macos' or vendor == 'apple' or torch.backends.mps.is_available():
+            self.device = torch.device(mps)
+        else: 
+            self.device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         providers = ["CPUExecutionProvider"]
         if use_cuda and "CUDAExecutionProvider" in ort.get_available_providers():
@@ -85,7 +97,7 @@ class Mobinet_ONNXInferenceModel:
             if self.pt_path is None:
                 raise ValueError("PyTorch model path not provided")
             
-            logger.info(f"Loading PyTorch model: {self.pt_path}")
+            logger.info(f"Loading model: {self.pt_path}")
 
             model = mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT)
 

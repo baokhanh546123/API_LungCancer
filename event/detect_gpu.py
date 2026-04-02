@@ -1,117 +1,87 @@
-import subprocess , os , importlib.util , platform , re 
+import subprocess , os , importlib.util , platform , re , json
 
-class Detect:
+class Detect():
     def __init__(self):
-        self.__gpus = []
-        self.system = platform.system()
+        self._gpu_info = None
 
-    def get_info_gpu(self):
-        self.__gpus = []  
+    def info(self):
+        subprocess.run(["chmod", "+x", "./event/pre_run.sh"], check=True)
+    
+        result = subprocess.run(
+            ["./event/pre_run.sh"], 
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8"
+        )
         
-        try:
-            try:
-                nvidia_out = subprocess.check_output(
-                    ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
-                    stderr=subprocess.DEVNULL
-                ).decode().strip()
-                
-                if nvidia_out:
-                    for line in nvidia_out.split('\n'):
-                        name, mem = line.split(',')
-                        self.__gpus.append({
-                            'name': name.strip(),
-                            'vendor': 'nvidia',
-                            'cores': 2048 if int(mem) > 4000 else 512, # Ước tính tạm thời
-                            'vram': int(mem)
-                        })
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                pass
-
-            self._check_system_gpu()
-            
-        except Exception as e:
-            print(f"Lỗi không xác định khi quét phần cứng: {e}")
-            
-        return self.__gpus
-
-    def _check_system_gpu(self):
-        try:
-            if self.system == "Windows":
-                cmd = "wmic path win32_VideoController get Name, AdapterRAM /format:list"
-                out = subprocess.check_output(cmd, shell=True).decode()
-                names = re.findall(r"Name=(.*)", out)
-                if names:
-                    for name in names:
-                        if not any(g['name'] == name.strip() for g in self.__gpus):
-                            self.__gpus.append({'name': name.strip(), 'vendor': 'common', 'cores': 256})
-
-            elif self.system == "Darwin":
-                cmd = "system_profiler SPDisplaysDataType"
-                out = subprocess.check_output(cmd).decode()
-                cores_match = re.search(r"Total Number of Cores:\s+(\d+)", out)
-                name_match = re.search(r"Chipset Model:\s+(.*)", out)
-                if name_match:
-                    self.__gpus.append({
-                        'name': name_match.group(1).strip(),
-                        'vendor': 'apple',
-                        'cores': int(cores_match.group(1)) if cores_match else 8
-                    })
-
-            elif self.system == "Linux":
-                out = subprocess.check_output("lspci | grep -i vga", shell=True).decode()
-                if out:
-                    self.__gpus.append({'name': out.strip(), 'vendor': 'linux_generic', 'cores': 256})
-        except Exception:
-            pass
-
-    def is_torch_installed(self) -> bool:
+        self._gpu_info = json.loads(result.stdout.strip())
+        return self._gpu_info
+    
+    def _is_torch_installed(self):
         return importlib.util.find_spec("torch") is not None
+    
+    def install_library(self):
+        if self._is_torch_installed():
+            print("PyTorch have already exists")
+            return True
+
+        info = self.info()
+        os = info['os']
+        vendor = info['vendor']
+        chipname = info['chipset_name']
+        gpu_name = info['gpu_name']
+        gpu_count = info['gpu_count']
+        vram = info['vram_mb']
+        tier = info['tier']
+
+        print("="*30)
+        print(f"   • OS           : {os}")
+        print(f"   • Vendor       : {vendor}")
+        print(f"   • Chipset      : {chipname}")
+        print(f"   • GPU Name     : {gpu_name}")
+        print(f"   • VRAM         : {vram} MB")
+        print(f"   • Tier         : {tier.upper()}")
+        print("="*30)
         
-
-    def install_library(self, min_cores=128):
-        try:
-            if self.is_torch_installed():
-                print("PyTorch đã được cài đặt sẵn. Bỏ qua.")
-                return True
-
-            gpus = self.get_info_gpu()
-            index_url = ""
-            
-            if not gpus:
-                print("[WARN] Không tìm thấy GPU. Sử dụng phiên bản CPU.")
-                index_url = "https://download.pytorch.org/whl/cpu"
+        install_cmd = ["pip", "install", "torch", "torchvision", "torchaudio"]
+        index_url = None
+        message = ""
+        
+        if (os == 'macos' or os == 'darkwin') and vendor == 'apple':
+            message = f'Apple Silicon {chipname}' 
+        elif vendor == 'nvidia':
+            if tier in ['medium' , 'strong']:
+                index_url = "https://download.pytorch.org/whl/cu126"
+                message = f"NVIDIA {gpu_name}"
             else:
-                primary = gpus[0]
-                print(f"[INFO] Phát hiện: {primary['name']} ({primary['cores']} cores)")
-
-                if primary['cores'] < min_cores:
-                    print(f"[WARN] GPU quá yếu ({primary['cores']} < {min_cores}). Cài bản CPU.")
-                    index_url = "https://download.pytorch.org/whl/cpu"
-                else:
-                    if primary['vendor'] == 'nvidia':
-                        index_url = "https://download.pytorch.org/whl/cu126"
-                    elif primary['vendor'] == 'apple':
-                        index_url = ""
-                    else:
-                        index_url = "https://download.pytorch.org/whl/cpu"
-
-            install_cmd = ["pip", "install", "torch", "torchvision", "torchaudio"]
-            if index_url:
-                install_cmd.extend(["--index-url", index_url])
-
-            print(f"[Đang chạy: {' '.join(install_cmd)}")
-            
-            result = subprocess.run(install_cmd, check=True)
-            return result.returncode == 0
-
-        except Exception as e:
-            print(f"[ERROR] Quá trình cài đặt thất bại: {e}")
+                index_url = "https://download.pytorch.org/whl/cpu"
+                message = f"{gpu_name} , Your GPU is weak , fallback CPU"
+        else:
+            index_url = "https://download.pytorch.org/whl/cpu"
+        
+        print(message)
+        if index_url:
+            install_cmd.extend(["--index-url", index_url])
+        print(f"Processing command: {' '.join(install_cmd)}")
+        try:
+            result = subprocess.run(install_cmd, check=True, capture_output=True, text=True)
+            print("Pytorch have installed successly")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"Failed install:")
+            print(e.stderr if e.stderr else str(e))
             return False
-
-"""if __name__ == "__main__":
+        except Exception as e:
+            print(f"Error : {e}")
+            return False
+            
+if __name__== "__main__":
     detector = Detect()
-    success = detector.install_library(min_cores=128)
-    if success:
-        print("--- Hoàn tất thành công ---")
-    else:
-        print("--- Thất bại ---")"""
+
+    # Lấy thông tin GPU bất kỳ lúc nào
+    gpu_info = detector.info()
+    print(gpu_info)
+
+    # Cài PyTorch (chỉ chạy 1 lần)
+    detector.install_library()

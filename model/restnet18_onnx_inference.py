@@ -7,8 +7,9 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from PIL import Image
 from pathlib import Path
 from typing import Union , Dict , Optional
-#from filter_image_class import ImageValidator
-from model.filter_image_class import ImageValidator
+from filter_image_class import ImageValidator
+from event.detect_gpu import Detect
+#from model.filter_image_class import ImageValidator
 import numpy as np , logging , onnxruntime as ort , io , matplotlib.pyplot as plt , cv2 , torch , torch.nn as nn , torch.nn.functional as F
 
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +48,17 @@ class ONNXInferenceModel:
             )
         ])
 
-        self.device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._detector = Detect()
+        info = self._detector.info()
+        
+        info = self.info()
+        os = info['os']
+        vendor = info['vendor']
+
+        if os == 'macos' or vendor == 'apple' or torch.backends.mps.is_available():
+            self.device = torch.device(mps)
+        else: 
+            self.device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         providers = ["CPUExecutionProvider"]
         if use_cuda and "CUDAExecutionProvider" in ort.get_available_providers():

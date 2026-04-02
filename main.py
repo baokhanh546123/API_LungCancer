@@ -5,7 +5,6 @@ from fastapi.responses import HTMLResponse ,JSONResponse , RedirectResponse , Re
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
-#from connect.pysql import get_members_table , produre_add_members , produre_delete_members , produre_update_members , length_member_id
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from dotenv import load_dotenv
@@ -14,9 +13,6 @@ from pathlib import Path
 from event.detect_gpu import Detect
 from event.detect_gradcam import GradCam
 import logging , re , os ,random , sys , uvicorn , io , time , base64 , asyncio , numpy as np , threading
-
-import logging
-import sys
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,13 +25,10 @@ def pre_run():
         detector = Detect()
         installer = GradCam()
         logging.info("Checking GPU compatibility...")
-        if not detector.install_library(min_cores=128):
-            logging.warning("Hardware requirements not met (min 128 cores).")
+        detector.info()
+        detector.install_library()
 
-        logging.info("Checking Grad-CAM dependencies...")
-        if not installer.install_grad_cam():
-            logging.error("Failed to initialize Grad-CAM environment.")
-            return False
+        installer.install_grad_cam()
         
         from model.dowload_model import download_models , check_folder
         MODEL_REPO = "Trank123/API_LungCancer"
@@ -46,7 +39,8 @@ def pre_run():
         "mobilenetv2_lung_finetuned.onnx.data",
         "resnet18_lung_finetuned.onnx",
         "resnet18_lung_finetuned.onnx.data",
-        "keras_cnn_xray.onnx"
+        "keras_cnn_xray.onnx",
+        "model_fold1.h5"
         ]
         is_model_ready = check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
         if not is_model_ready:
