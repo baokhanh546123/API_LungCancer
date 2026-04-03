@@ -26,7 +26,8 @@ def pre_run():
         installer = GradCam()
         logging.info("Checking GPU compatibility...")
         detector.info()
-        detector.install_library()
+        detector.install_library_torch()
+        detector.install_library_tf()
 
         installer.install_grad_cam()
         
@@ -240,22 +241,22 @@ async def load_model(
             }
         elif model == "model-handmade":
             onnx_path = current_dir / 'model/models/keras_cnn_xray.onnx'
-            #pt_path = current_dir / 'model/models/best_pneumonia_classifier_mobilenetv2.pt'
+            tf_path = current_dir / 'model/models/model_fold1.h5'
 
-            #if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
-            #    raise HTTPException(status_code=500, detail="Model file not found on server")
+            if (not onnx_path.exists() or onnx_path is None) and (not tf_path.exists() or tf_path is None):
+                raise HTTPException(status_code=500, detail="Model file not found on server")
             
-            from model.handmake_onnx_inference import Handmake_ONNXInferenceModel
+            from model.handmake_onnx_inference import ONNXInferenceHandmakeModel
             start = time.perf_counter()
-            hm = Handmake_ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.75)
+            hm = ONNXInferenceHandmakeModel(onnx_path , tf_path , labels=LABELS , threshold=0.75)
             #predict
-            result = mobilenet.predict(image)
+            result = hm.predict(img=image)
             if 'Error' in result:
                 return {"status": "error", "message": result['Error']}
             loop = asyncio.get_event_loop()
             grad_cam_res = await loop.run_in_executor(
-                executor,
-                partial(mobilenet.gradcam_for_img, image, mobilenet.image_transforms, method='gradcam')
+            executor,
+            partial(hm.gradcam_for_img, image, method="gradcam", alpha=0.5),
             )
             if not grad_cam_res.get('success', False):
                 error_msg = grad_cam_res.get('error', 'Unknown error')
@@ -307,7 +308,7 @@ if __name__ == "__main__":
         print("\n" + "="*50)
         print("[SUCCESS] Môi trường hợp lệ. Đang khởi động Server...")
         print("="*50 + "\n")
-        uvicorn.run(app, host="127.0.0.11", port=8000 , reload = False)
+        uvicorn.run(app, host="127.0.10.16", port=8000 , reload = True)
     else:
         print("\n" + "!"*50)
         print("[FAILED] Thiếu thư viện hoặc phần cứng không đạt.")
