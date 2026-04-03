@@ -95,7 +95,7 @@ except Exception as e:
     print(f"An unexpected error occurred during inference: {e}")
 
 
-  target_layer = infer_model.layer4[-1].conv2
+target_layer = infer_model.layer4[-1].conv2
 
 def gradcam_for_image(model, img_path, transform, target_layer=None, method="gradcam"):
     if target_layer is None:

@@ -9,7 +9,7 @@ class GradCam(Detect):
         return importlib.util.find_spec("pytorch_grad_cam") is not None
     
     def install_grad_cam(self):
-        torch_installed = super().install_library()
+        torch_installed = super().install_library_torch()
         if not torch_installed:
             print('Error')
             return False

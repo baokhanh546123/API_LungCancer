@@ -18,14 +18,7 @@ class Detect():
         self._gpu_info = json.loads(result.stdout.strip())
         return self._gpu_info
     
-    def _is_torch_installed(self):
-        return importlib.util.find_spec("torch") is not None
-    
-    def install_library(self):
-        if self._is_torch_installed():
-            print("PyTorch have already exists")
-            return True
-
+    def display_info(self):
         info = self.info()
         os = info['os']
         vendor = info['vendor']
@@ -43,6 +36,23 @@ class Detect():
         print(f"   • VRAM         : {vram} MB")
         print(f"   • Tier         : {tier.upper()}")
         print("="*30)
+
+        return os , vendor , chipname , gpu_name , gpu_count , vram , tier
+
+    
+    def _is_torch_installed(self):
+        return importlib.util.find_spec("torch") is not None
+    
+    def _is_tensorflow_installed(self):
+        return importlib.util.find_spec("tensorflow") is not None
+    
+    
+    def install_library_torch(self):
+        if self._is_torch_installed():
+            print("PyTorch have already exists")
+            return True
+
+        os , vendor , chipname , gpu_name , gpu_count , vram , tier = self.display_info()
         
         install_cmd = ["pip", "install", "torch", "torchvision", "torchaudio"]
         index_url = None
@@ -75,7 +85,49 @@ class Detect():
         except Exception as e:
             print(f"Error : {e}")
             return False
-            
+
+    def install_library_tf(self):
+        if self._is_tensorflow_installed():
+            print("Tensorflow have already exists")
+            return True
+
+        os , vendor , chipname , gpu_name , gpu_count , vram , tier = self.display_info()
+        cmds = None 
+        message = ""
+
+        if os in ['macos' , 'darwin'] and vendor == 'apple':
+            cmds = [
+                ["pip", "install", "tensorflow"],
+                ["pip", "install", "tensorflow-metal"]
+            ]
+            message = f"Apple Silicon {chipname}"
+        elif vendor == 'nvidia':
+            if tier in ['strong' , 'medium']:
+                cmds = [["pip", "install", "tensorflow[and-cuda]"]]
+                message = f"NVIDIA {gpu_name}"
+            else:
+                cmds = [["pip", "install", "tensorflow"]]
+                message = f"NVIDIA {gpu_name} .Your GPU is weak , fallback to CPU"
+        else:
+            cmds = [["pip", "install", "tensorflow"]]
+            message = f"Use CPU version"
+        
+        print(message)
+        try:
+            for cmd in cmds:
+                print(f"Run command : {' '.join(cmd)}")
+                result = subprocess.run(cmd , check=True, capture_output=True ,text=True)
+            print("TF have installed successly")
+            return True 
+        except subprocess.CalledProcessError as e:
+            print("Failed install:")
+            print(e.stderr if e.stderr else str(e))
+            return False
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+        
+
 if __name__== "__main__":
     detector = Detect()
 
@@ -84,4 +136,5 @@ if __name__== "__main__":
     print(gpu_info)
 
     # Cài PyTorch (chỉ chạy 1 lần)
-    detector.install_library()
+    detector.install_library_torch()
+    detector.install_library_tf()
