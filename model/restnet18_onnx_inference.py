@@ -7,9 +7,9 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from PIL import Image
 from pathlib import Path
 from typing import Union , Dict , Optional
-from filter_image_class import ImageValidator
+#from filter_image_class import ImageValidator
 from event.detect_gpu import Detect
-#from model.filter_image_class import ImageValidator
+from model.filter_image_class import ImageValidator
 import numpy as np , logging , onnxruntime as ort , io , matplotlib.pyplot as plt , cv2 , torch , torch.nn as nn , torch.nn.functional as F
 
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +32,7 @@ class ONNXInferenceModel:
         
         self.labels = labels
         self.input_size = input_size
+        self.use_cuda = use_cuda
         self.threshold = float(threshold)
 
         self.pytorch_model = None
@@ -50,42 +51,42 @@ class ONNXInferenceModel:
 
         self._detector = Detect()
         info = self._detector.info()
-        
-        info = self.info()
+
         os = info['os']
         vendor = info['vendor']
 
-        if os == 'macos' or vendor == 'apple' or torch.backends.mps.is_available():
-            self.device = torch.device(mps)
+        if (os == 'macos' or vendor == 'apple' or os == 'darwin') or torch.backends.mps.is_available():
+            self.device = torch.device("mps")
         else: 
             self.device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        providers = ["CPUExecutionProvider"]
-        if use_cuda and "CUDAExecutionProvider" in ort.get_available_providers():
-            providers.insert(0, "CUDAExecutionProvider")
-
-        self.session = ort.InferenceSession(
-            onnx_path,
-            providers=providers
-        )
-
+        
+        self.session = self._load_model()
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
     
-    def load_model(self) -> ort.InferenceSession:
+    def _load_model(self) -> ort.InferenceSession:
         try:
             opts = ort.SessionOptions()
             opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
             opts.intra_op_num_threads = 4
-            
-            session = ort.InferenceSession(
-                str(self.onnx_path),
+
+            available = ort.get_available_providers()
+
+            providers = ["CPUExecutionProvider"]
+            if "CoreMLExecutionProvider" in available:
+                providers.insert(0, "CoreMLExecutionProvider")
+            if self.use_cuda and "CUDAExecutionProvider" in available:
+                providers.insert(0, "CUDAExecutionProvider")
+
+            self.session = ort.InferenceSession(
+                self.onnx_path,
                 sess_options=opts,
-                providers=['CPUExecutionProvider']
+                providers=providers
             )
             
             logger.info(f"ONNX model loaded: {self.onnx_path}")
-            return session
+            return self.session
             
         except Exception as e:
             logger.error(f"Failed to load ONNX model: {e}")
@@ -204,31 +205,24 @@ class ONNXInferenceModel:
             input_tensor = self.image_transforms(pil_img)
             input_np = input_tensor.unsqueeze(0).numpy().astype(np.float32)
 
-            # Step 3: Perform inference using the ONNX model
             logits = self._infer(input_np)
 
-            # Apply softmax to convert logits to probabilities for binary classification.
-            # Subtracting max for numerical stability to prevent exp overflow.
             logits_stable = logits - np.max(logits, axis=1, keepdims=True)
             exp_logits = np.exp(logits_stable)
             probabilities = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
 
-            # Extract probabilities for the two classes
             normal_prob = float(probabilities[0, 0])
             pneumonia_prob = float(probabilities[0, 1])
 
-            # Determine the predicted class based on the threshold
             is_pneumonia = pneumonia_prob >= self.threshold
             pred_index = 1 if is_pneumonia else 0
             predicted_label = self.labels[pred_index]
 
-            # Calculate prediction confidence
             confidence = max(normal_prob, pneumonia_prob)
 
-            # Step 4: Format and return the results
             result = {
                 "clinical_decision": predicted_label,
-                "decision_score": pneumonia_prob, # Probability of the positive class (PNEUMONIA)
+                "decision_score": pneumonia_prob,
                 "decision_threshold": self.threshold,
                 "risk_probability": {
                     self.labels[0]: normal_prob,

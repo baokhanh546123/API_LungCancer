@@ -6,9 +6,9 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pathlib import Path
 from typing import Union , Dict , Optional
-from filter_image_class import ImageValidator
+#from filter_image_class import ImageValidator
 from event.detect_gpu import Detect
-#from model.filter_image_class import ImageValidator
+from model.filter_image_class import ImageValidator
 
 import numpy as np , logging , onnxruntime as ort , io , matplotlib.pyplot as plt , cv2 , torch , torch.nn as nn , torch.nn.functional as F
 
@@ -52,41 +52,41 @@ class Mobinet_ONNXInferenceModel:
 
         info = self._detector.info()
         
-        info = self.info()
         os = info['os']
         vendor = info['vendor']
 
-        if os == 'macos' or vendor == 'apple' or torch.backends.mps.is_available():
-            self.device = torch.device(mps)
+        if (os == 'macos' or vendor == 'apple' or os == 'darwin') or torch.backends.mps.is_available():
+            self.device = torch.device("mps")
         else: 
             self.device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        providers = ["CPUExecutionProvider"]
-        if use_cuda and "CUDAExecutionProvider" in ort.get_available_providers():
-            providers.insert(0, "CUDAExecutionProvider")
-
-        self.session = ort.InferenceSession(
-            onnx_path,
-            providers=providers
-        )
+        self.session = self._load_model()
 
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
     
-    def load_model(self) -> ort.InferenceSession:
+    def _load_model(self) -> ort.InferenceSession:
         try:
             opts = ort.SessionOptions()
             opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
             opts.intra_op_num_threads = 4
             
-            session = ort.InferenceSession(
-                str(self.onnx_path),
+            available = ort.get_available_providers()
+
+            providers = ["CPUExecutionProvider"]
+            if "CoreMLExecutionProvider" in available:
+                providers.insert(0, "CoreMLExecutionProvider")
+            if self.use_cuda and "CUDAExecutionProvider" in available:
+                providers.insert(0, "CUDAExecutionProvider")
+
+            self.session = ort.InferenceSession(
+                self.onnx_path,
                 sess_options=opts,
-                providers=['CPUExecutionProvider']
+                providers=providers
             )
             
             logger.info(f"ONNX model loaded: {self.onnx_path}")
-            return session
+            return self.session
             
         except Exception as e:
             logger.error(f"Failed to load ONNX model: {e}")
