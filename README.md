@@ -123,7 +123,7 @@ Your contributions are a vital component in the refinement of this diagnostic to
 
 ## 6. Infomation Author
 
-**Author**: Trank 
+**Author**: Mrs.Binh Phuong Vo , Nhi Ngoc Thi Nguyen , Khanh Dang Phuc Tran.
 
 **Affiliation**: Dalat University 
 
