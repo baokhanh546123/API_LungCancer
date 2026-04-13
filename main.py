@@ -135,7 +135,7 @@ async def load_model(
     try:
         onnx_path , pt_path = None , None
 
-        LABELS = ['NORMAL', 'PNEUMONIA']
+        LABELS = ['NORMAL', 'CANCER']
 
         if model == 'model-resnet':
             onnx_path = current_dir / 'model/models/resnet18_lung_finetuned.onnx'
