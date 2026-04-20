@@ -24,7 +24,7 @@ The application relies on a robust, multi-tier architecture designed for scalabi
 
 ### Database
 The model development and validation processes utilize the following open-source radiological dataset:
-* **Source:** [Chest X-Ray Images (Pneumonia) - Kaggle]([https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia](https://www.kaggle.com/datasets/quynhlecl/lung-cancer-x-ray)])
+* **Source:** [Chest X-Ray Images (Pneumonia) - Kaggle](https://www.kaggle.com/datasets/quynhlecl/lung-cancer-x-ray)
 
 ### Clinical Validation & Regulatory Compliance (FDA/CE Standards)
 To align with international medical device standards (such as FDA 21 CFR or CE marking for SaMD), the framework incorporates the following diagnostic metrics:
