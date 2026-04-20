@@ -25,7 +25,7 @@ class ONNXInferenceModel:
         use_cuda: bool = True,
         threshold: float = 0.5
     ):
-        assert len(labels) == 2, "Labels list must contain exactly two elements (e.g., ['NORMAL', 'PNEUMONIA'])."
+        assert len(labels) == 2, "Labels list must contain exactly two elements (e.g., ['NORMAL', 'cancer'])."
 
         self.onnx_path = onnx_path
         self.pt_path = pt_path
@@ -212,25 +212,25 @@ class ONNXInferenceModel:
             probabilities = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
 
             normal_prob = float(probabilities[0, 0])
-            pneumonia_prob = float(probabilities[0, 1])
+            cancer_prob = float(probabilities[0, 1])
 
-            is_pneumonia = pneumonia_prob >= self.threshold
-            pred_index = 1 if is_pneumonia else 0
+            is_cancer = cancer_prob >= self.threshold
+            pred_index = 1 if is_cancer else 0
             predicted_label = self.labels[pred_index]
 
-            confidence = max(normal_prob, pneumonia_prob)
+            confidence = max(normal_prob, cancer_prob)
 
             result = {
                 "clinical_decision": predicted_label,
-                "decision_score": pneumonia_prob,
+                "decision_score": cancer_prob,
                 "decision_threshold": self.threshold,
                 "risk_probability": {
                     self.labels[0]: normal_prob,
-                    self.labels[1]: pneumonia_prob
+                    self.labels[1]: cancer_prob
                 },
                 "prediction_confidence": confidence,
                 "interpretation": (
-                    f"Risk of {self.labels[1]} is {pneumonia_prob:.2%}. "
+                    f"Risk of {self.labels[1]} is {cancer_prob:.2%}. "
                     f"Threshold is {self.threshold:.2%}. "
                     f"Clinical decision: {predicted_label}."
                 ),
@@ -312,9 +312,9 @@ class ONNXInferenceModel:
                 probs = F.softmax(outputs, dim=1)
                 
                 normal_prob = probs[0, 0].item()
-                pneumonia_prob = probs[0, 1].item()
+                cancer_prob = probs[0, 1].item()
                 
-                pred_class = 1 if pneumonia_prob >= self.threshold else 0
+                pred_class = 1 if cancer_prob >= self.threshold else 0
                 pred_label = self.labels[pred_class]
                 pred_confidence = probs[0, pred_class].item()
             
@@ -360,7 +360,7 @@ class ONNXInferenceModel:
                 "prediction_confidence": pred_confidence,
                 "probabilities": {
                     self.labels[0]: normal_prob,
-                    self.labels[1]: pneumonia_prob
+                    self.labels[1]: cancer_prob
                 },
                 "grayscale_cam": cam_resized,
                 "cam_overlay": cam_overlay,
@@ -394,8 +394,8 @@ class ONNXInferenceModel:
 
 """path = '/home/trank/python/python3.13/CNN/Image/person1008_virus_1691.jpeg'
 onnx = '/home/trank/python/python3.13/CNN/model/resnet18_lung_finetuned.onnx'
-pt = '/home/trank/python/python3.13/CNN/model/best_pneumonia_classifier.pt'
-LABELS = ['NORMAL', 'PNEUMONIA']
+pt = '/home/trank/python/python3.13/CNN/model/best_cancer_classifier.pt'
+LABELS = ['NORMAL', 'cancer']
 
 model = ONNXInferenceModel(onnx_path=onnx , pt_path=pt , labels=LABELS , threshold=0.6)
 

@@ -15,7 +15,7 @@ class ONNXInferenceHandmakeModel:
     def __init__(self , onnx_path : Union[str,Path]  , tf_path : Optional[Union[str, Path]] , labels : List[str] ,
                 input_size : Tuple[int , int] = (128,128) , use_cuda : bool = True 
                 ,last_conv_layer_name : str = 'conv_4_2' , threshold : float = 0.75):
-                assert len(labels) == 2 , "Labels list must contain exactly two elements (e.g., ['NORMAL', 'PNEUMONIA'])."
+                assert len(labels) == 2 , "Labels list must contain exactly two elements (e.g., ['NORMAL', 'cancer'])."
 
                 self.image_validator = ImageValidator(strict_mode=True)
 
@@ -180,24 +180,24 @@ class ONNXInferenceHandmakeModel:
 
             probabilities = logits[0]
             normal_prob = float(probabilities[0,0])
-            pneumonia_prob = float(probabilities[0,1])
+            cancer_prob = float(probabilities[0,1])
 
             #predict_class_idx = np.argmax(probabilities)
-            predict_class_idx = 1 if pneumonia_prob >= self.threshold else 0 
+            predict_class_idx = 1 if cancer_prob >= self.threshold else 0 
             predicted_label = self.labels[predict_class_idx]
             confidence = float(probabilities[0,predict_class_idx])
 
             result = {
                     "clinical_decision": predicted_label,
-                    "decision_score": pneumonia_prob,
+                    "decision_score": cancer_prob,
                     "decision_threshold": self.threshold,
                     "risk_probability": {
                         self.labels[0]: round(normal_prob,8),
-                        self.labels[1]: round(pneumonia_prob,8)
+                        self.labels[1]: round(cancer_prob,8)
                     },
                     "prediction_confidence": confidence,
                     "interpretation": (
-                        f"Risk of {self.labels[1]} is {pneumonia_prob:.2%}. "
+                        f"Risk of {self.labels[1]} is {cancer_prob:.2%}. "
                         f"Threshold is {self.threshold:.2%}. "
                         f"Clinical decision: {predicted_label}."
                     ),

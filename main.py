@@ -34,8 +34,8 @@ def pre_run():
         from model.dowload_model import download_models , check_folder
         MODEL_REPO = "Trank123/API_LungCancer"
         FILES_TO_DOWNLOAD = [
-        "best_pneumonia_classifier.pt",
-        "best_pneumonia_classifier_mobilenetv2.pt",
+        "best_cancer_classifier.pt",
+        "best_cancer_classifier_mobilenetv2.pt",
         "mobilenetv2_lung_finetuned.onnx",
         "mobilenetv2_lung_finetuned.onnx.data",
         "resnet18_lung_finetuned.onnx",
@@ -135,11 +135,11 @@ async def load_model(
     try:
         onnx_path , pt_path = None , None
 
-        LABELS = ['NORMAL', 'CANCER']
+        LABELS = ['NORMAL', 'cancer']
 
         if model == 'model-resnet':
             onnx_path = current_dir / 'model/models/resnet18_lung_finetuned.onnx'
-            pt_path = current_dir / 'model/models/best_pneumonia_classifier.pt'
+            pt_path = current_dir / 'model/models/best_cancer_classifier.pt'
             if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
                 raise HTTPException(status_code=500, detail="Failed to download model files")
                 
@@ -192,7 +192,7 @@ async def load_model(
 
         elif model == 'model-mobinet':
             onnx_path = current_dir / 'model/models/mobilenetv2_lung_finetuned.onnx'
-            pt_path = current_dir / 'model/models/best_pneumonia_classifier_mobilenetv2.pt'
+            pt_path = current_dir / 'model/models/best_cancer_classifier_mobilenetv2.pt'
 
             if (not onnx_path.exists() or onnx_path is None) and (not pt_path.exists() or pt_path is None):
                 raise HTTPException(status_code=500, detail="Model file not found on server")
@@ -308,7 +308,7 @@ if __name__ == "__main__":
         print("\n" + "="*50)
         print("[SUCCESS] Môi trường hợp lệ. Đang khởi động Server...")
         print("="*50 + "\n")
-        uvicorn.run(app, host="127.0.10.16", port=8000 , reload = True)
+        uvicorn.run(app, host="127.0.10.16", port=8000 , reload = False)
     else:
         print("\n" + "!"*50)
         print("[FAILED] Thiếu thư viện hoặc phần cứng không đạt.")

@@ -136,7 +136,7 @@ elements.modelForm.addEventListener('submit', async (event) => {
     const updateInferenceUI = (data, originalFile) => {
         const res = data.result;
         const images = data.images;
-        const isPneumonia = res.prediction_label === 'PNEUMONIA';
+        const isPneumonia = res.prediction_label === 'cancer';
 
         updateVisualStatus(isPneumonia);
         updateText('info-predict', res.prediction_label);
@@ -145,9 +145,9 @@ elements.modelForm.addEventListener('submit', async (event) => {
         
         updateText('info-inference-time', res.run_time ? `${res.run_time.toFixed(4)}s` : '0.0000s');
         if (res.raw_probabilities) {
-            const pneu = res.raw_probabilities['PNEUMONIA'] || res.raw_probabilities['pneumonia'] || 0;
-            const norm = res.raw_probabilities['NORMAL'] || res.raw_probabilities['normal'] || 0;
-            updateText('info-prob-pneumonia', pneu.toFixed(4));
+            const pneu = res.raw_probabilities['cancer'] || 0;
+            const norm = res.raw_probabilities['NORMAL'] || 0;
+            updateText('info-prob-cancer', pneu.toFixed(4));
             updateText('info-prob-normal', norm.toFixed(4));
         }
         updateText('info-interpretation', res.interpretation);
