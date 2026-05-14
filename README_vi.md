@@ -117,14 +117,6 @@ pip install -r requirements.txt
 
 ## 5. Quy trình Vận hành
 
-### Chế độ Phát triển (Development Mode)
-
-Phù hợp cho quá trình nghiên cứu, thử nghiệm và gỡ lỗi. Máy chủ sẽ tự động tải lại khi mã nguồn thay đổi.
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
 ### Chế độ Triển khai (Production Mode)
 
 Sử dụng cho các kịch bản chạy ổn định, không yêu cầu tải lại nóng.
