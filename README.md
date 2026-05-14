@@ -91,12 +91,6 @@ pip install -r requirements.txt
 ## 4. Execution Protocol
 Initialize the server in the mode appropriate for your use case.
 
-### Development Mode (Hot Reloading)
-Recommended for debugging and active development cycles. The server will auto-restart upon code changes.
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
 ### Production Mode
 Standard execution entry point for stable deployment.
 
