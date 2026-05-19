@@ -180,11 +180,11 @@ class ONNXInferenceHandmakeModel:
             logits = self._infer(input_np)
 
             probabilities = logits[0]
-            normal_prob = float(probabilities[0,0])
-            cancer_prob = float(probabilities[0,1])
+            normal_prob = float(probabilities[0,1])
+            cancer_prob = float(probabilities[0,0])
 
             #predict_class_idx = np.argmax(probabilities)
-            predict_class_idx = 1 if cancer_prob >= self.threshold else 0 
+            predict_class_idx = 0 if cancer_prob >= self.threshold else 1
             predicted_label = self.labels[predict_class_idx]
             confidence = float(probabilities[0,predict_class_idx])
 

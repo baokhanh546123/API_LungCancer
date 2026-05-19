@@ -41,7 +41,7 @@ def pre_run():
         "resnet18_lung_finetuned.onnx",
         "resnet18_lung_finetuned.onnx.data",
         "keras_cnn_xray.onnx",
-        "model_fold1.h5"
+        "model_fold2.h5"
         ]
         is_model_ready = check_folder(MODEL_REPO, FILES_TO_DOWNLOAD)
         if not is_model_ready:
@@ -241,7 +241,7 @@ async def load_model(
             }
         elif model == "model-handmade":
             onnx_path = current_dir / 'model/models/keras_cnn_xray.onnx'
-            tf_path = current_dir / 'model/models/model_fold1.h5'
+            tf_path = current_dir / 'model/models/model_fold2.h5'
 
             if (not onnx_path.exists() or onnx_path is None) and (not tf_path.exists() or tf_path is None):
                 raise HTTPException(status_code=500, detail="Model file not found on server")
