@@ -1,4 +1,4 @@
-import os , logging
+import os , logging , time 
 from pathlib import Path
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import RepositoryNotFoundError, EntryNotFoundError
@@ -24,11 +24,6 @@ def check_folder(repo_id, file_list):
     else:
         logging.info("All model files are present.")
         return True
-
-import logging
-import time
-from pathlib import Path
-from huggingface_hub import hf_hub_download, EntryNotFoundError, RepositoryNotFoundError
 
 def download_models(repo_id, file_list, target_subdir='model/models', retries=3):
     base_dir = Path(__file__).resolve().parent.parent
