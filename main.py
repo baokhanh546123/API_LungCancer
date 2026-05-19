@@ -28,7 +28,7 @@ def pre_run():
         detector.info()
         detector.install_library_torch()
         detector.install_library_tf()
-
+        
         installer.install_grad_cam()
         
         from model.dowload_model import download_models , check_folder
@@ -145,7 +145,7 @@ async def load_model(
                 
             from model.restnet18_onnx_inference import ONNXInferenceModel
             start = time.perf_counter()
-            restnet = ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.6)
+            restnet = ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.9)
             
             #predict
             result = restnet.predict(image)
@@ -199,7 +199,7 @@ async def load_model(
             
             from model.mobilenetv2_lung_inference import Mobinet_ONNXInferenceModel
             start = time.perf_counter()
-            mobilenet = Mobinet_ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.75)
+            mobilenet = Mobinet_ONNXInferenceModel(str(onnx_path) , str(pt_path) , LABELS , threshold=0.9)
             #predict
             result = mobilenet.predict(image)
             if 'Error' in result:
@@ -248,7 +248,7 @@ async def load_model(
             
             from model.handmake_onnx_inference import ONNXInferenceHandmakeModel
             start = time.perf_counter()
-            hm = ONNXInferenceHandmakeModel(onnx_path , tf_path , labels=LABELS , threshold=0.75)
+            hm = ONNXInferenceHandmakeModel(onnx_path , tf_path , labels=LABELS , threshold=0.9)
             #predict
             result = hm.predict(img=image)
             if 'Error' in result:
@@ -308,7 +308,7 @@ if __name__ == "__main__":
         print("\n" + "="*50)
         print("[SUCCESS] Môi trường hợp lệ. Đang khởi động Server...")
         print("="*50 + "\n")
-        uvicorn.run(app, host="127.0.10.16", port=8000 , reload = False)
+        uvicorn.run("main:app", host="127.0.10.16", port=8006 , reload = True)
     else:
         print("\n" + "!"*50)
         print("[FAILED] Thiếu thư viện hoặc phần cứng không đạt.")

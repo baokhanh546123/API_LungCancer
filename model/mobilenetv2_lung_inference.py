@@ -225,7 +225,7 @@ class Mobinet_ONNXInferenceModel:
             predicted_label = self.labels[pred_index]
 
             # Calculate prediction confidence
-            confidence = max(normal_prob, cancer_prob)
+            confidence = cancer_prob if is_cancer else normal_prob
 
             # Step 4: Format and return the results
             result = {

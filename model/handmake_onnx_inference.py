@@ -166,10 +166,11 @@ class ONNXInferenceHandmakeModel:
                 else:
                     raise e 
             if not is_valid:
-                result = {
+                return {
                     "Error" : message,
                     "validation_failed" : True
                 }
+
             
             pil_img = self.convert_to_pil_image(img)
             input_np = self.__preprocessing(pil_img,augment=True)

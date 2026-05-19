@@ -183,30 +183,27 @@ class ONNXInferenceModel:
             raise
 
 
-    def predict(self, image_path: Union[Image.Image , str , Path , bytes]) -> Dict:
+    def predict(self, image_path: Union[Image.Image, str, Path, bytes]) -> Dict:
         try:
             try:
                 img_bytes = self.convert_to_bytes(image_path)
                 is_valid, message = self.image_validator.is_chest_xray(img_bytes)
-            except Exception as e :
-                if isinstance(image_path , Image.Image):
-                    is_valid , message =  True, "Validation skipped for PIL Image"
+            except Exception as e:
+                if isinstance(image_path, Image.Image):
+                    is_valid, message = True, "Validation skipped for PIL Image"
                 else:
-                    raise e 
-                
+                    raise e
+
             if not is_valid:
-                result = {
-                    "Error" : message,
-                    "validation_failed": True
-                }
-                return result
-            
+                return {"Error": message, "validation_failed": True}
+
             pil_img = self.convert_to_pil_image(image_path)
             input_tensor = self.image_transforms(pil_img)
             input_np = input_tensor.unsqueeze(0).numpy().astype(np.float32)
 
             logits = self._infer(input_np)
 
+            # Softmax cho binary classification
             logits_stable = logits - np.max(logits, axis=1, keepdims=True)
             exp_logits = np.exp(logits_stable)
             probabilities = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
@@ -214,21 +211,23 @@ class ONNXInferenceModel:
             normal_prob = float(probabilities[0, 0])
             cancer_prob = float(probabilities[0, 1])
 
+            # Dự đoán dựa trên threshold
             is_cancer = cancer_prob >= self.threshold
             pred_index = 1 if is_cancer else 0
             predicted_label = self.labels[pred_index]
 
-            confidence = max(normal_prob, cancer_prob)
+            # SỬA LỖI: confidence = xác suất của class được chọn
+            confidence = cancer_prob if is_cancer else normal_prob
 
             result = {
                 "clinical_decision": predicted_label,
-                "decision_score": cancer_prob,
+                "decision_score": cancer_prob,          # risk score (cancer probability)
                 "decision_threshold": self.threshold,
                 "risk_probability": {
                     self.labels[0]: normal_prob,
                     self.labels[1]: cancer_prob
                 },
-                "prediction_confidence": confidence,
+                "prediction_confidence": confidence,    # đã sửa
                 "interpretation": (
                     f"Risk of {self.labels[1]} is {cancer_prob:.2%}. "
                     f"Threshold is {self.threshold:.2%}. "
@@ -240,14 +239,10 @@ class ONNXInferenceModel:
                     "Final diagnosis must be made by a qualified medical professional."
                 )
             }
-
             return result
         except Exception as e:
             logger.error(f"Prediction failed: {e}")
-            return {
-                "Error": f"Prediction error: {str(e)}",
-                "prediction_failed": True
-            }
+            return {"Error": f"Prediction error: {str(e)}", "prediction_failed": True}
     
     def predict_batch(self , image_path: list) -> list:
         results = []
